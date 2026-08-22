@@ -61,8 +61,10 @@ class FixtureTransport:
             pattern = step["path"].replace("{id}", "[^/]+")
             if not re.fullmatch(pattern, path):
                 continue
-            if not all(str(want.get(k)) == v
-                       for k, v in (step.get("params") or {}).items()):
+            step_params = step.get("params") or {}
+            if set(step_params.keys()) != set(want.keys()):
+                continue
+            if any(str(want[k]) != v for k, v in step_params.items()):
                 continue
             responses = step["responses"]
             if len(responses) > 1:

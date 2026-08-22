@@ -51,3 +51,6 @@ def test_link_costs_one_op_per_document(conn):
     assert len(link_calls) == 6
     assert len(client.usage_log) == 6
     assert all(u["ops_charged"] == 1 for u in client.usage_log)
+    document_gets = [c for c in client.t.calls
+                     if c[0] == "GET" and c[1].startswith("/v1/documents/")]
+    assert document_gets == []

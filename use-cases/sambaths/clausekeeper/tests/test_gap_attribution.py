@@ -1,3 +1,5 @@
+import pytest
+
 from conftest import client_for, seeded_conn
 
 from clausekeeper import editing
@@ -5,6 +7,48 @@ from clausekeeper import editing
 
 def always_approve(change):
     return True
+
+
+def test_multi_chunk_section_delete_orphans_every_deleted_chunk(seeded_conn):
+    from clausekeeper import db as ckdb
+    conn = seeded_conn
+    dur = "dur_0003-p04"
+    for cid in ("h-chunk", "p-chunk"):
+        conn.execute(
+            "INSERT INTO links(clause_id, durable_document_id, chunk_id,"
+            " heading_path, quote_excerpt, status)"
+            " VALUES('8.7', ?, ?, 'Disposition', 'quote', 'covered')",
+            (dur, cid))
+    conn.commit()
+    cur = conn.execute(
+        "INSERT INTO edits(job_id, change_id, durable_document_id, chunk_id,"
+        " operation, occurred_at, causing_instruction)"
+        " VALUES('job_x', 'chg_99', ?, 'h-chunk', 'delete',"
+        " '2026-08-23T00:00:00Z', 'remove disposition')",
+        (dur,))
+    conn.commit()
+    doc = conn.execute(
+        "SELECT * FROM documents WHERE session_slot_id = 'doc_p04'"
+        ).fetchone()
+    diff = {"change_id": "chg_99", "operation": "delete",
+            "chunk_id": "h-chunk",
+            "old_html": '<h2 data-chunk-id="h-chunk">3 Disposition of'
+                        ' nonconforming devices</h2><p data-chunk-id='
+                        '"p-chunk">Dispositions are decided by the QA'
+                        ' Manager.</p>',
+            "new_html": ""}
+    landed = editing._land_gaps(conn, doc, diff, cur.lastrowid, "remove disposition",
+                                "job_x", "2026-08-23T00:00:00Z", ckdb.now())
+    assert landed == 1
+    statuses = {r["chunk_id"]: r["status"] for r in conn.execute(
+        "SELECT chunk_id, status FROM links WHERE durable_document_id = ?"
+        " AND chunk_id IN ('h-chunk','p-chunk')", (dur,))}
+    assert statuses == {"h-chunk": "gap", "p-chunk": "gap"}
+    narratives = conn.execute(
+        "SELECT COUNT(*) c FROM gaps g JOIN edits e ON e.edit_id ="
+        " g.cause_edit_id WHERE g.clause_id = '8.7' AND e.change_id ="
+        " 'chg_99'").fetchone()["c"]
+    assert narratives == 1
 
 
 def test_gap_lands_synchronously_naming_the_cause(seeded_conn):

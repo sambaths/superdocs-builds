@@ -19,9 +19,11 @@ def build_links(client, conn, clauses: list[dict]):
     docs = conn.execute(
         "SELECT * FROM documents WHERE role != 'generated' "
         "AND durable_document_id IS NOT NULL").fetchall()
+    roster = {d["document_id"]: d for d in
+              client.roster(session_id, include_html=True)}
     for doc in docs:
-        entry = client.document(session_id, doc["session_slot_id"])
-        html = entry.get("html") or entry.get("document", {}).get("html", "")
+        entry = roster.get(doc["session_slot_id"], {})
+        html = entry.get("html") or ""
         chunks = ingest.extract_chunks(html)
         clause_list = "; ".join(
             f"{c['id']} ({c['title']})" for c in clauses if c["linkable"])

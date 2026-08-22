@@ -37,8 +37,10 @@ def detect_changed(client, conn) -> dict:
     conn.commit()
     db.set_meta(conn, "doc_events_cursor", str(max_event))
 
+    roster_by_slot = {}
     for entry in client.roster(session_id, include_html=True,
                                report_changed=True):
+        roster_by_slot[entry.get("document_id")] = entry
         slot = entry.get("document_id")
         if not entry.get("changed"):
             continue
@@ -50,7 +52,7 @@ def detect_changed(client, conn) -> dict:
 
     checked_now, already_checked = [], []
     for slot, doc in changed.items():
-        html = _doc_html(client, session_id, slot)
+        html = (roster_by_slot.get(slot) or {}).get("html", "")
         new_hash = ingest.content_hash(html)
         doc["version_hash"] = new_hash
         run_key = f"{slot}:{new_hash}"
@@ -62,16 +64,6 @@ def detect_changed(client, conn) -> dict:
     return {"changed": checked_now, "already_checked": already_checked,
             "renamed": renamed, "skipped_echo": skipped_echo,
             "skipped_roles": skipped_roles}
-
-
-def _doc_html(client, session_id, slot) -> str:
-    try:
-        entry = client.document(session_id, slot)
-        return entry.get("html") or ""
-    except Exception:
-        roster = client.roster(session_id, include_html=True)
-        found = next((d for d in roster if d["document_id"] == slot), {})
-        return found.get("html", "")
 
 
 def affected_clauses(conn, durable_id) -> list[dict]:

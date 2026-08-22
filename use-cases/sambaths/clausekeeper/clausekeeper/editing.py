@@ -107,11 +107,19 @@ def _process_completed(client, conn, doc, job_id, instruction, result,
 
 def _land_gaps(conn, doc, diff, edit_id, instruction, job_id, occurred_at,
                now) -> int:
+    chunk_ids = {diff.get("chunk_id")}
+    chunk_ids.update(ingest.CHUNK_RE.findall(diff.get("old_html") or ""))
+    chunk_ids.discard(None)
+    if not chunk_ids:
+        return 0
+    placeholders = ",".join("?" * len(chunk_ids))
     rows = conn.execute(
         "SELECT l.link_id, l.clause_id FROM links l WHERE "
-        "l.durable_document_id = ? AND l.chunk_id = ? AND l.status != 'gap'",
-        (doc["durable_document_id"], diff.get("chunk_id"))).fetchall()
+        "l.durable_document_id = ? AND l.chunk_id IN (%s) "
+        "AND l.status != 'gap'" % placeholders,
+        (doc["durable_document_id"], *chunk_ids)).fetchall()
     count = 0
+    seen_clauses = set()
     for row in rows:
         clause = conn.execute("SELECT title FROM clauses WHERE clause_id = ?",
                               (row["clause_id"],)).fetchone()
@@ -121,14 +129,21 @@ def _land_gaps(conn, doc, diff, edit_id, instruction, job_id, occurred_at,
         conn.execute("UPDATE links SET status = 'gap', last_verified_at = ?,"
                      " last_verified_job = ? WHERE link_id = ?",
                      (now, job_id, row["link_id"]))
-        conn.execute(
-            "INSERT INTO gaps(clause_id, durable_document_id, cause_edit_id,"
-            " detected_at, narrative) VALUES(?,?,?,?,?)",
-            (row["clause_id"], doc["durable_document_id"], edit_id, now, text))
-        count += 1
-        title = clause["title"] if clause else ""
-        print(f"GAP LANDED: clause {row['clause_id']} ({title})\n  {text}")
+        if row["clause_id"] not in seen_clauses:
+            conn.execute(
+                "INSERT INTO gaps(clause_id, durable_document_id,"
+                " cause_edit_id, detected_at, narrative) VALUES(?,?,?,?,?)",
+                (row["clause_id"], doc["durable_document_id"], edit_id, now,
+                 text))
+            seen_clauses.add(row["clause_id"])
+            count += 1
+        print(f"GAP LANDED: clause {row['clause_id']} ({title_of(clause)})"
+              f"\n  {text}")
     return count
+
+
+def title_of(clause) -> str:
+    return clause["title"] if clause else ""
 
 
 def _heading_of(diff) -> str:
