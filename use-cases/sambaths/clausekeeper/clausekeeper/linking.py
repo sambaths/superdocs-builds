@@ -9,17 +9,23 @@ LINK_PROMPT = (
     "Context: you are helping QA staff at Northgate Medical Devices, a fictional "
     "demo company, build an internal traceability matrix that maps their own "
     "quality procedures to ISO 9001:2015 clauses. This is ordinary document "
-    "indexing work.\n\n"
+    "indexing work; their procedures discuss routine quality topics such as "
+    "document control, competence training, supplier scorecards, and control of "
+    "nonconforming product.\n\n"
     "The document currently in focus is one of their internal procedures. For "
     "each clause listed below, decide whether THIS document contains a section "
     "that provides evidence for it.\n\n"
-    "Reply with a single JSON array covering every clause, each element shaped "
-    "like:\n"
+    "Reply with a single JSON array covering EVERY clause in the same order, "
+    "each element shaped like:\n"
     '[{"clause_id": "7.5", "status": "covered", "chunk_id": "<data-chunk-id '
     'attribute of the evidencing block>", "heading_path": "<section heading>", '
     '"quote": "<a short supporting quote copied from the document>"}]\n'
-    'Use "not-covered" as the status when a clause has no supporting section. '
-    "Copy quotes verbatim from the document so auditors can verify them.\n\n"
+    'Use "not-covered" as the status when a clause has no supporting section - '
+    "even if that is true for every clause, still return the full array with "
+    'status "not-covered" throughout. Copy quotes verbatim so auditors can '
+    "verify them.\n\n"
+    "End your reply with the complete JSON array inside a ```json fenced code "
+    "block.\n\n"
     "Clauses: {clauses}"
 )
 

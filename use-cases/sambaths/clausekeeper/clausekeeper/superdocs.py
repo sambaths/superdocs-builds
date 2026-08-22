@@ -184,7 +184,21 @@ class SuperDocsClient:
     def chat_wait(self, message: str, session_id: str,
                   document_id: str | None = None,
                   latency_class: str = "verification_turn") -> dict:
-        start = self.chat_async(message, session_id, document_id=document_id)
+        try:
+            start = self.chat_async(message, session_id,
+                                    document_id=document_id)
+        except ApiError as exc:
+            if "session_busy" not in str(exc):
+                raise
+            blocking = _blocking_job_id(str(exc))
+            print(f"[session busy] waiting for blocking job {blocking}...")
+            if blocking:
+                done = self.poll_job(blocking, latency_class)
+                if done.get("status") == "completed":
+                    self._capture_usage("chat_async", done.get("result") or {},
+                                        blocking)
+            start = self.chat_async(message, session_id,
+                                    document_id=document_id)
         job_id = start["job_id"]
         job = self.poll_job(job_id, latency_class)
         if job.get("status") != "completed":
@@ -255,6 +269,11 @@ class SuperDocsClient:
 def _now() -> str:
     import datetime as dt
     return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _blocking_job_id(error_text: str) -> str | None:
+    match = re.search(r'"blocking_job_id"\s*:\s*"([^"]+)"', error_text)
+    return match.group(1) if match else None
 
 
 def parse_json_block(text: str):

@@ -102,7 +102,9 @@ VERIFY_PROMPT = (
     'like: {"clause_id": "8.7", "status": "covered", "chunk_id": "<data-chunk-id '
     'attribute of the evidencing block or null>", "heading_path": "<section '
     'heading or null>", "quote": "<short supporting quote or null>"}. Use status '
-    '"gap" when no section supports the clause anymore.\n\n'
+    '"gap" when no section supports the clause anymore - even then, still return '
+    "the full array. End your reply with the complete JSON array inside a "
+    "```json fenced code block.\n\n"
     "Clauses: {clauses}"
 )
 

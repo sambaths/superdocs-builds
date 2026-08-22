@@ -13,6 +13,12 @@ def init_session(client, conn, corpus_dir: str) -> dict:
     session = client.create_session()
     session_id = session["session_id"]
     db.set_meta(conn, "session_id", session_id)
+    conn.execute("DELETE FROM gaps")
+    conn.execute("DELETE FROM links")
+    conn.execute("DELETE FROM edits")
+    conn.execute("DELETE FROM runs")
+    conn.execute("DELETE FROM our_jobs")
+    conn.execute("DELETE FROM documents")
 
     corpus = Path(corpus_dir)
     for path in sorted(corpus.glob("*.md")):
