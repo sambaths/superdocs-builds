@@ -20,7 +20,7 @@ Annual objectives are set at the January management review. Current cycle:
 
 | Objective | Measure | Target | Owner |
 |---|---|---|---|
-| Reduce final-inspection escapes | Escapes per audit sample | < 0.5% | QA Manager |
+| Reduce final-inspection escapes | Escapes per inspection sample | < 0.5% | QA Manager |
 | Improve delivery reliability | On-time delivery | ≥ 96% | Operations Manager |
 | Cut complaint response time | Days to first response | ≤ 5 days | QA Manager |
 

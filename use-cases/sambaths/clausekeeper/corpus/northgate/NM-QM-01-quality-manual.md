@@ -30,7 +30,7 @@ Our system runs through five core process groups, each with a named owner and me
 1. Realization: order intake → purchasing → assembly → final inspection → release (owner: Operations Manager)
 2. Control: document control, change management, nonconforming output, CAPA (owner: QA Manager)
 3. People: hiring, training, competence verification (owner: HR Lead)
-4. Assurance: monitoring metrics, audits, management review inputs (owner: Director of Quality)
+4. Assurance: monitoring metrics, assessment results, management review inputs (owner: Director of Quality)
 5. Improvement: objective setting, improvement actions (owner: Director of Quality)
 
 Process performance uses the measures listed in section 11; targets sit in the annual quality plan.
@@ -63,7 +63,7 @@ Monthly quality scorecards track first-pass yield, on-time delivery, complaint r
 
 ## 10 Management review
 
-Management review runs quarterly with required inputs: scorecard trends, audit program status, complaint and CAPA summaries, supplier performance, resource adequacy, and improvement progress. Minutes record decisions with owners and due dates; open actions carry into the next review until closed.
+Management review runs quarterly with required inputs: scorecard trends, assessment program status, complaint and CAPA summaries, supplier performance, resource adequacy, and improvement progress. Minutes record decisions with owners and due dates; open actions carry into the next review until closed.
 
 ## 11 Continual improvement
 

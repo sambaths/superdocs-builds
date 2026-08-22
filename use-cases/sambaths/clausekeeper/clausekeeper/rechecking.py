@@ -178,6 +178,11 @@ def _ops(resp: dict) -> int:
     return int((resp.get("usage") or {}).get("ops_charged", 0))
 
 
+def linking_split(heading):
+    from .linking import _split_headings
+    return _split_headings(heading)
+
+
 def _apply_verdicts(conn, doc, verdicts, job_id, now, chunks=None) -> int:
     chunks = chunks or []
     by_chunk = {c["chunk_id"]: c for c in chunks}
@@ -186,41 +191,47 @@ def _apply_verdicts(conn, doc, verdicts, job_id, now, chunks=None) -> int:
         cid = str(v.get("clause_id"))
         status = str(v.get("status", "")).lower()
         if status == "covered":
-            chunk = None
-            if v.get("chunk_id"):
-                chunk = by_chunk.get(str(v["chunk_id"]))
-            if not chunk:
-                chunk = ingest.find_chunk_by_heading(chunks,
-                                                     v.get("heading_path"))
-            if not chunk:
-                print(f"WARN: {doc['name']}: could not resolve section "
-                      f"'{v.get('heading_path')}' for clause {cid}; skipped")
+            headings = linking_split(v.get("heading_path"))
+            if not headings:
+                print(f"WARN: {doc['name']}: clause {cid} marked covered "
+                      f"without a section; skipped")
                 continue
-            chunk_id = chunk["chunk_id"]
-            heading = v.get("heading_path") or chunk["heading_path"]
-            quote = chunk["quote_excerpt"]
-            existing = conn.execute(
-                "SELECT link_id FROM links WHERE clause_id = ? AND"
-                " durable_document_id = ? AND chunk_id = ?",
-                (cid, doc["durable_document_id"], chunk_id)).fetchone()
-            if existing:
-                conn.execute(
-                    "UPDATE links SET status='covered', heading_path=?,"
-                    " quote_excerpt=?, last_verified_at=?, last_verified_job=?"
-                    " WHERE link_id=?",
-                    (heading, quote, now, job_id, existing["link_id"]))
-                conn.execute(
-                    "DELETE FROM gaps WHERE clause_id = ? AND"
-                    " durable_document_id = ?",
-                    (cid, doc["durable_document_id"]))
-            else:
-                conn.execute(
-                    "INSERT OR IGNORE INTO links(clause_id,"
-                    " durable_document_id, chunk_id, heading_path,"
-                    " quote_excerpt, status, last_verified_at,"
-                    " last_verified_job) VALUES(?,?,?,?,?,'covered',?,?)",
-                    (cid, doc["durable_document_id"], chunk_id, heading,
-                     quote, now, job_id))
+            for heading in headings:
+                chunk = None
+                if v.get("chunk_id"):
+                    chunk = by_chunk.get(str(v["chunk_id"]))
+                if not chunk:
+                    chunk = ingest.find_chunk_by_heading(chunks, heading)
+                if not chunk:
+                    print(f"WARN: {doc['name']}: could not resolve section "
+                          f"'{heading}' for clause {cid}; skipped")
+                    continue
+                chunk_id = chunk["chunk_id"]
+                final_heading = heading or chunk["heading_path"]
+                quote = chunk["quote_excerpt"]
+                existing = conn.execute(
+                    "SELECT link_id FROM links WHERE clause_id = ? AND"
+                    " durable_document_id = ? AND chunk_id = ?",
+                    (cid, doc["durable_document_id"], chunk_id)).fetchone()
+                if existing:
+                    conn.execute(
+                        "UPDATE links SET status='covered', heading_path=?,"
+                        " quote_excerpt=?, last_verified_at=?,"
+                        " last_verified_job=? WHERE link_id=?",
+                        (final_heading, quote, now, job_id,
+                         existing["link_id"]))
+                    conn.execute(
+                        "DELETE FROM gaps WHERE clause_id = ? AND"
+                        " durable_document_id = ?",
+                        (cid, doc["durable_document_id"]))
+                else:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO links(clause_id,"
+                        " durable_document_id, chunk_id, heading_path,"
+                        " quote_excerpt, status, last_verified_at,"
+                        " last_verified_job) VALUES(?,?,?,?,?,'covered',?,?)",
+                        (cid, doc["durable_document_id"], chunk_id,
+                         final_heading, quote, now, job_id))
         elif status == "gap":
             updated = conn.execute(
                 "UPDATE links SET status='gap', last_verified_at=?,"

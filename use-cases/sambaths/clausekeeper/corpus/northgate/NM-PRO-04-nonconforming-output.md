@@ -23,7 +23,7 @@ Every disposition entry captures the NCR number, quantity affected, decision mak
 
 ## 4 Corrective action
 
-NCRs meeting any trigger — repeat occurrence within 90 days, customer complaint linkage, escaped defect found downstream, or regulatory reportability — open a corrective action. The owner performs root-cause analysis using five-why or fishbone methods documented in the CAPA record, defines corrective actions addressing the cause (not the symptom), and states how effectiveness will be verified. Effectiveness checks run no sooner than 30 days after implementation and require objective evidence (metric movement, audit result) before closure. Failed effectiveness checks reopen the CAPA with escalated ownership.
+NCRs meeting any trigger — repeat occurrence within 90 days, customer complaint linkage, escaped defect found downstream, or regulatory reportability — open a corrective action. The owner performs root-cause analysis using five-why or fishbone methods documented in the CAPA record, defines corrective actions addressing the cause (not the symptom), and states how effectiveness will be verified. Effectiveness checks run no sooner than 30 days after implementation and require objective evidence (metric movement, verification result) before closure. Failed effectiveness checks reopen the CAPA with escalated ownership.
 
 ## 5 Feeding the system
 

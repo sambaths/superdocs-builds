@@ -12,7 +12,7 @@ Before order confirmation, the account manager and Operations review the custome
 
 ## 3 Supplier selection and evaluation
 
-Suppliers of components affecting product quality are qualified before first order: quality system questionnaire, sample evaluation against drawing requirements, and where warranted on-site audit. Qualified suppliers appear on the approved vendor list with their rating. Scorecards run quarterly using incoming PPM, on-time performance, and NCR history; two consecutive failing quarters trigger corrective action request or removal from the list. Contract sterilization is controlled as an externally provided process with annual audit and batch certificate review before release.
+Suppliers of components affecting product quality are qualified before first order: quality system questionnaire, sample evaluation against drawing requirements, and where warranted on-site assessment. Qualified suppliers appear on the approved vendor list with their rating. Scorecards run quarterly using incoming PPM, on-time performance, and NCR history; two consecutive failing quarters trigger corrective action request or removal from the list. Contract sterilization is controlled as an externally provided process with annual assessment and batch certificate review before release.
 
 ## 4 Purchasing controls
 

@@ -1,4 +1,5 @@
 import json as _json
+import re
 
 import yaml
 
@@ -64,30 +65,45 @@ def build_links(client, conn, clauses: list[dict]):
         for m in mappings:
             if str(m.get("status", "")).lower() != "covered":
                 continue
-            chunk = None
-            if m.get("chunk_id"):
-                chunk = by_chunk.get(str(m.get("chunk_id")))
-            if not chunk:
-                chunk = ingest.find_chunk_by_heading(chunks,
-                                                     m.get("heading_path"))
-            if not chunk:
-                print(f"WARN: {doc['name']}: could not resolve section "
-                      f"'{m.get('heading_path')}' for clause "
-                      f"{m.get('clause_id')}; skipped")
+            headings = _split_headings(m.get("heading_path"))
+            if not headings:
+                print(f"WARN: {doc['name']}: clause {m.get('clause_id')} "
+                      f"marked covered without a section; skipped")
                 continue
-            heading = m.get("heading_path") or chunk["heading_path"]
-            quote = chunk["quote_excerpt"]
-            conn.execute(
-                "INSERT OR IGNORE INTO links(clause_id, durable_document_id, "
-                "chunk_id, heading_path, quote_excerpt, status, last_verified_at,"
-                " last_verified_job) VALUES(?, ?, ?, ?, ?, 'covered', ?, ?)",
-                (str(m["clause_id"]), doc["durable_document_id"],
-                 chunk["chunk_id"], heading, quote[:200], now, job_id))
-            added += 1
+            for heading in headings:
+                chunk = None
+                if m.get("chunk_id"):
+                    chunk = by_chunk.get(str(m.get("chunk_id")))
+                if not chunk:
+                    chunk = ingest.find_chunk_by_heading(chunks, heading)
+                if not chunk:
+                    print(f"WARN: {doc['name']}: could not resolve section "
+                          f"'{heading}' for clause {m.get('clause_id')}; "
+                          f"skipped")
+                    continue
+                final_heading = heading or chunk["heading_path"]
+                quote = chunk["quote_excerpt"]
+                conn.execute(
+                    "INSERT OR IGNORE INTO links(clause_id,"
+                    " durable_document_id, chunk_id, heading_path,"
+                    " quote_excerpt, status, last_verified_at,"
+                    " last_verified_job) VALUES(?, ?, ?, ?, ?, 'covered',"
+                    " ?, ?)",
+                    (str(m["clause_id"]), doc["durable_document_id"],
+                     chunk["chunk_id"], final_heading, quote[:200], now,
+                     job_id))
+                added += 1
         conn.commit()
         results.append({"doc": doc["name"], "links_added": added,
                         "ops_charged": _ops(resp), "parse_failed": False})
     return results
+
+
+def _split_headings(heading) -> list[str]:
+    if not heading or not str(heading).strip():
+        return []
+    parts = re.split(r"[;]| \+ |, and ", str(heading))
+    return [p.strip(" .;-") for p in parts if p.strip(" .;-")][:6]
 
 
 def _ops(resp: dict) -> int:

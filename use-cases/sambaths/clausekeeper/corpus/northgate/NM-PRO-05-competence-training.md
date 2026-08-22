@@ -20,4 +20,4 @@ Managers cover three awareness points in team meetings each quarter: why the qua
 
 ## 5 Records
 
-Training files, observation checklists, blind-test results, and acknowledgments are retained per NM-QM-01 and are auditable on request.
+Training files, observation checklists, blind-test results, and acknowledgments are retained per NM-QM-01 and are available for review on request.
