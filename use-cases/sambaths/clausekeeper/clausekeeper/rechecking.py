@@ -9,7 +9,7 @@ def detect_changed(client, conn) -> dict:
     cursor = int(db.get_meta(conn, "doc_events_cursor", "0"))
     feed = client.doc_events(session_id, after_id=cursor)
 
-    changed, renamed, skipped_echo, skipped_roles = {}, 0, 0, 0
+    changed, renamed_set, skipped_echo, skipped_roles = {}, set(), 0, 0
     max_event = cursor
     for event in feed.get("events", []):
         event_id = int(event.get("event_id", max_event))
@@ -25,7 +25,7 @@ def detect_changed(client, conn) -> dict:
             conn.execute("UPDATE documents SET name = ? WHERE"
                          " session_slot_id = ?",
                          (event.get("new_name") or row["name"], slot))
-            renamed += 1
+            renamed_set.add(slot)
             continue
         if guards.is_echo(event, conn):
             skipped_echo += 1
@@ -36,24 +36,46 @@ def detect_changed(client, conn) -> dict:
         changed[slot] = dict(row)
     conn.commit()
     db.set_meta(conn, "doc_events_cursor", str(max_event))
+
     roster_by_slot = {}
     for entry in client.roster(session_id, include_html=True,
                                report_changed=True):
         roster_by_slot[entry.get("document_id")] = entry
-        slot = entry.get("document_id")
-        if not entry.get("changed"):
-            continue
-        row = conn.execute(
+
+    def row_for(slot):
+        return conn.execute(
             "SELECT * FROM documents WHERE session_slot_id = ?",
             (slot,)).fetchone()
-        if row and guards.role_allows(dict(row)):
-            changed[slot] = dict(row)
+
+    for slot, entry in roster_by_slot.items():
+        row = row_for(slot)
+        if not row:
+            continue
+        new_name = entry.get("name")
+        if new_name and new_name != row["name"] and slot not in renamed_set:
+            conn.execute(
+                "UPDATE documents SET name = ? WHERE session_slot_id = ?",
+                (new_name, slot))
+            renamed_set.add(slot)
+        if entry.get("changed") and guards.role_allows(dict(row)):
+            changed.setdefault(slot, dict(row))
 
     for row in conn.execute(
             "SELECT * FROM documents WHERE needs_verify = 1").fetchall():
-        slot = row["session_slot_id"]
         if guards.role_allows(dict(row)):
+            changed.setdefault(row["session_slot_id"], dict(row))
+
+    for slot, entry in roster_by_slot.items():
+        row = row_for(slot)
+        if not row or not guards.role_allows(dict(row)):
+            continue
+        html = entry.get("html") or ""
+        new_hash = ingest.content_hash(html)
+        if row["version_hash"] and new_hash != row["version_hash"] \
+                and not guards.already_run(
+                    conn, f"{slot}:{new_hash}"):
             changed.setdefault(slot, dict(row))
+    conn.commit()
 
     checked_now, already_checked = [], []
     for slot, doc in changed.items():
@@ -68,7 +90,7 @@ def detect_changed(client, conn) -> dict:
         else:
             checked_now.append(doc)
     return {"changed": checked_now, "already_checked": already_checked,
-            "renamed": renamed, "skipped_echo": skipped_echo,
+            "renamed": len(renamed_set), "skipped_echo": skipped_echo,
             "skipped_roles": skipped_roles}
 
 
@@ -159,8 +181,10 @@ def run_recheck(client, conn, scope_clauses=None) -> dict:
                                        chunks)
         charged = _ops(resp)
         guards.mark_run(conn, doc["run_key"], "recheck", charged)
-        conn.execute("UPDATE documents SET needs_verify = 0 WHERE"
-                     " session_slot_id = ?", (doc["session_slot_id"],))
+        conn.execute(
+            "UPDATE documents SET version_hash = ?, needs_verify = 0"
+            " WHERE session_slot_id = ?",
+            (doc["version_hash"], doc["session_slot_id"]))
         results.append({"name": doc["name"], "clauses_checked": len(clauses),
                         "gaps": gaps_created, "ops_charged": charged})
     total_ops = sum(u["ops_charged"] for u in client.usage_log) - ops_before
