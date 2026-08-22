@@ -57,8 +57,6 @@ def detect_changed(client, conn) -> dict:
 
     checked_now, already_checked = [], []
     for slot, doc in changed.items():
-        conn.execute("UPDATE documents SET needs_verify = 0 WHERE"
-                     " session_slot_id = ?", (slot,))
         html = (roster_by_slot.get(slot) or {}).get("html", "")
         doc["html"] = html
         new_hash = ingest.content_hash(html)
@@ -161,6 +159,8 @@ def run_recheck(client, conn, scope_clauses=None) -> dict:
                                        chunks)
         charged = _ops(resp)
         guards.mark_run(conn, doc["run_key"], "recheck", charged)
+        conn.execute("UPDATE documents SET needs_verify = 0 WHERE"
+                     " session_slot_id = ?", (doc["session_slot_id"],))
         results.append({"name": doc["name"], "clauses_checked": len(clauses),
                         "gaps": gaps_created, "ops_charged": charged})
     total_ops = sum(u["ops_charged"] for u in client.usage_log) - ops_before

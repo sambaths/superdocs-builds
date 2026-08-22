@@ -76,32 +76,30 @@ def cmd_recheck(args):
     conn = db.connect(args.db)
     client = build_client(args)
     try:
-        detection = rechecking.detect_changed(client, conn)
         scope = None
-        if args.sample:
+        if getattr(args, "sample", None):
             scope = [c["id"] for c in
                      subset(load_library(args.library), args.sample)]
-        plan = rechecking.build_plan(client, conn, detection,
-                                     scope_clauses=scope)
         if args.plan:
+            detection = rechecking.detect_changed(client, conn)
+            plan = rechecking.build_plan(client, conn, detection,
+                                         scope_clauses=scope)
             print("RECHECK PLAN (preview mode - zero billable ops)")
             for item in plan["items"]:
-                scope = ", ".join(item["clauses"]) or "(none)"
+                names = ", ".join(item["clauses"]) or "(none)"
                 print(f"  {item['name']}: {len(item['clauses'])} affected"
-                      f" clauses [{scope}] ~{item['estimated_ops']} op")
+                      f" clauses [{names}] ~{item['estimated_ops']} op")
             print(f"estimated cost: {plan['estimated_ops']} ops;"
                   f" spent so far: 0")
             if plan["skips"]:
                 print(f"skipped (already checked): {plan['skips']}")
             return
-        scope = None
-        if args.sample:
-            scope = [c["id"] for c in
-                     subset(load_library(args.library), args.sample)]
         summary = rechecking.run_recheck(client, conn, scope_clauses=scope)
         persist_usage(conn, client)
         print(json.dumps(summary, indent=2))
         print(f"total ops this run: {summary['ops_spent']}")
+    except OpsFloorExceeded as exc:
+        print(f"STOPPED: {exc}")
     except OpsFloorExceeded as exc:
         print(f"STOPPED: {exc}")
         sys.exit(2)
