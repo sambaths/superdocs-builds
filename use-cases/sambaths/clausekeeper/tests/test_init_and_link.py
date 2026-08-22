@@ -47,10 +47,12 @@ def test_link_costs_one_op_per_document(conn):
     ingest.init_session(client, conn, str(CORPUS))
     from clausekeeper.library import LIBRARY_PATH, load_library
     linking.build_links(client, conn, load_library(LIBRARY_PATH))
-    link_calls = [c for c in client.t.calls if c == ("POST", "/v1/chat")]
+    link_calls = [c for c in client.t.calls if c == ("POST", "/v1/chat/async")]
     assert len(link_calls) == 6
     assert len(client.usage_log) == 6
     assert all(u["ops_charged"] == 1 for u in client.usage_log)
+    sync_chats = [c for c in client.t.calls if c == ("POST", "/v1/chat")]
+    assert sync_chats == []
     document_gets = [c for c in client.t.calls
                      if c[0] == "GET" and c[1].startswith("/v1/documents/")]
     assert document_gets == []

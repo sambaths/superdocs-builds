@@ -125,9 +125,10 @@ def run_recheck(client, conn, scope_clauses=None) -> dict:
         clause_list = "; ".join(
             f"{c['clause_id']} ({c['title']}): {c['expectation']}"
             for c in clauses) or "(no linked clauses)"
-        resp = client.chat(
+        resp = client.chat_wait(
             VERIFY_PROMPT.replace("{clauses}", clause_list), session_id,
-            document_id=doc["session_slot_id"])
+            document_id=doc["session_slot_id"],
+            latency_class="verification_turn")
         verdicts = parse_verdicts(resp.get("response", ""))
         job_id = resp.get("job_id") or "sync-chat"
         now = db.now()

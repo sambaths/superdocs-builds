@@ -179,6 +179,20 @@ class SuperDocsClient:
             body["approval_mode"] = approval_mode
         return self.t.request("POST", "/v1/chat/async", json_body=body)
 
+    def chat_wait(self, message: str, session_id: str,
+                  document_id: str | None = None,
+                  latency_class: str = "verification_turn") -> dict:
+        start = self.chat_async(message, session_id, document_id=document_id)
+        job_id = start["job_id"]
+        job = self.poll_job(job_id, latency_class)
+        if job.get("status") != "completed":
+            raise RuntimeError(f"chat job {job_id} ended "
+                               f"{job.get('status')}")
+        result = job.get("result") or {}
+        self._capture_usage("chat_async", result, job_id)
+        return {"response": result.get("response", ""),
+                "usage": result.get("usage"), "job_id": job_id}
+
     def register_our_job(self, conn, job_id: str, purpose: str):
         conn.execute(
             "INSERT OR IGNORE INTO our_jobs(job_id, purpose, created_at) "

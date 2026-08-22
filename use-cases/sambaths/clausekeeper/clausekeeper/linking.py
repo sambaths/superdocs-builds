@@ -27,9 +27,10 @@ def build_links(client, conn, clauses: list[dict]):
         chunks = ingest.extract_chunks(html)
         clause_list = "; ".join(
             f"{c['id']} ({c['title']})" for c in clauses if c["linkable"])
-        resp = client.chat(
+        resp = client.chat_wait(
             LINK_PROMPT.replace("{clauses}", clause_list), session_id,
-            document_id=doc["session_slot_id"])
+            document_id=doc["session_slot_id"],
+            latency_class="verification_turn")
         mappings = parse_json_block(resp.get("response", ""))
         by_chunk = {c["chunk_id"]: c for c in chunks}
         job_id = resp.get("job_id") or "sync-chat"

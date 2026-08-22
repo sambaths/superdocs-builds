@@ -19,10 +19,12 @@
   {"method": "GET", "path": "/v1/documents/{id}",
    "responses": [{"document_id": "doc_p04",
      "html": "<h1>Procedure NM-PRO-04</h1><div data-chunk-id=\"c102_capa\"><h2>Corrective action</h2><p>The owner performs root-cause analysis documented in the CAPA record.</p></div>"}]},
-  {"method": "POST", "path": "/v1/chat",
-   "responses": [{"response": "[{\"clause_id\": \"10.2\", \"status\": \"covered\", \"chunk_id\": \"c102_capa\", \"heading_path\": \"Corrective action\", \"quote\": \"root-cause analysis\"}]",
-                  "usage": {"ops_charged": 1, "was_billable": true,
-                            "monthly_used": 451, "monthly_remaining": 49,
-                            "quota_exhausted": false,
-                            "subscription_tier": "free"}}]}
+  {"method": "POST", "path": "/v1/chat/async",
+   "responses": [{"job_id": "job_verify_floor", "status": "pending"}]},
+  {"method": "GET", "path": "/v1/jobs/{id}",
+   "responses": [{"job_id": "job_verify_floor", "status": "completed",
+     "result": {"response": "[{\"clause_id\": \"10.2\", \"status\": \"covered\", \"chunk_id\": \"c102_capa\", \"heading_path\": \"Corrective action\", \"quote\": \"root-cause analysis\"}]",
+       "usage": {"ops_charged": 1, "was_billable": true,
+                 "monthly_used": 451, "monthly_remaining": 49,
+                 "quota_exhausted": false, "subscription_tier": "free"}}}]}
 ]
