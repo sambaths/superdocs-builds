@@ -1,0 +1,28 @@
+[
+  {"method": "GET", "path": "/v1/sessions/ck-demo-01/doc-events",
+   "params": {"after_id": "0"},
+   "responses": [{"events": [
+     {"event_id": 14, "type": "document_updated", "document_id": "doc_p04",
+      "job_id": "job_web_900", "occurred_at": "2026-08-23T08:20:00Z",
+      "actor": "human-web-ui"}
+   ], "next_cursor": 14}]},
+  {"method": "GET", "path": "/v1/sessions/ck-demo-01/doc-events",
+   "params": {"after_id": "14"},
+   "responses": [{"events": [], "next_cursor": 14}]},
+  {"method": "GET", "path": "/v1/sessions/ck-demo-01/documents",
+   "params": {"include_html": "true", "report_changed": "true"},
+   "responses": [{"documents": [
+     {"document_id": "doc_p04", "name": "NM-PRO-04-nonconforming-output",
+      "durable_document_id": "dur_0003-p04", "changed": true,
+      "html": "<h1>Procedure NM-PRO-04</h1><div data-chunk-id=\"c102_capa\"><h2>Corrective action</h2><p>The owner performs root-cause analysis documented in the CAPA record.</p></div>"}
+   ]}]},
+  {"method": "GET", "path": "/v1/documents/{id}",
+   "responses": [{"document_id": "doc_p04",
+     "html": "<h1>Procedure NM-PRO-04</h1><div data-chunk-id=\"c102_capa\"><h2>Corrective action</h2><p>The owner performs root-cause analysis documented in the CAPA record.</p></div>"}]},
+  {"method": "POST", "path": "/v1/chat",
+   "responses": [{"response": "[{\"clause_id\": \"10.2\", \"status\": \"covered\", \"chunk_id\": \"c102_capa\", \"heading_path\": \"Corrective action\", \"quote\": \"root-cause analysis\"}]",
+                  "usage": {"ops_charged": 1, "was_billable": true,
+                            "monthly_used": 451, "monthly_remaining": 49,
+                            "quota_exhausted": false,
+                            "subscription_tier": "free"}}]}
+]
