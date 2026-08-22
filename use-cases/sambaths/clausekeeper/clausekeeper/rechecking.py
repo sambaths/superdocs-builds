@@ -194,6 +194,7 @@ def _apply_verdicts(conn, doc, verdicts, job_id, now, chunks=None) -> int:
     chunks = chunks or []
     by_chunk = {c["chunk_id"]: c for c in chunks}
     gaps_created = 0
+    kept_chunks: dict[str, set] = {}
     for v in verdicts:
         cid = str(v.get("clause_id"))
         status = str(v.get("status", "")).lower()
@@ -203,6 +204,7 @@ def _apply_verdicts(conn, doc, verdicts, job_id, now, chunks=None) -> int:
                 print(f"WARN: {doc['name']}: clause {cid} marked covered "
                       f"without a section; skipped")
                 continue
+            kept = kept_chunks.setdefault(cid, set())
             for heading in headings:
                 chunk = None
                 if v.get("chunk_id"):
@@ -213,32 +215,22 @@ def _apply_verdicts(conn, doc, verdicts, job_id, now, chunks=None) -> int:
                     print(f"WARN: {doc['name']}: could not resolve section "
                           f"'{heading}' for clause {cid}; skipped")
                     continue
+                kept.add(chunk["chunk_id"])
                 chunk_id = chunk["chunk_id"]
                 final_heading = heading or chunk["heading_path"]
                 quote = chunk["quote_excerpt"]
-                existing = conn.execute(
-                    "SELECT link_id FROM links WHERE clause_id = ? AND"
-                    " durable_document_id = ? AND chunk_id = ?",
-                    (cid, doc["durable_document_id"], chunk_id)).fetchone()
-                if existing:
-                    conn.execute(
-                        "UPDATE links SET status='covered', heading_path=?,"
-                        " quote_excerpt=?, last_verified_at=?,"
-                        " last_verified_job=? WHERE link_id=?",
-                        (final_heading, quote, now, job_id,
-                         existing["link_id"]))
-                    conn.execute(
-                        "DELETE FROM gaps WHERE clause_id = ? AND"
-                        " durable_document_id = ?",
-                        (cid, doc["durable_document_id"]))
-                else:
-                    conn.execute(
-                        "INSERT OR IGNORE INTO links(clause_id,"
-                        " durable_document_id, chunk_id, heading_path,"
-                        " quote_excerpt, status, last_verified_at,"
-                        " last_verified_job) VALUES(?,?,?,?,?,'covered',?,?)",
-                        (cid, doc["durable_document_id"], chunk_id,
-                         final_heading, quote, now, job_id))
+                conn.execute(
+                    "INSERT INTO links(clause_id, durable_document_id,"
+                    " chunk_id, heading_path, quote_excerpt, status,"
+                    " last_verified_at, last_verified_job)"
+                    " VALUES(?,?,?,?,?,'covered',?,?)"
+                    " ON CONFLICT(clause_id, durable_document_id, chunk_id)"
+                    " DO UPDATE SET status='covered', heading_path=excluded."
+                    " heading_path, quote_excerpt=excluded.quote_excerpt,"
+                    " last_verified_at=excluded.last_verified_at,"
+                    " last_verified_job=excluded.last_verified_job",
+                    (cid, doc["durable_document_id"], chunk_id,
+                     final_heading, quote[:200], now, job_id))
         elif status == "gap":
             updated = conn.execute(
                 "UPDATE links SET status='gap', last_verified_at=?,"
@@ -260,6 +252,17 @@ def _apply_verdicts(conn, doc, verdicts, job_id, now, chunks=None) -> int:
                     (cid, doc["durable_document_id"],
                      cause["edit_id"] if cause else 0, now, text))
                 gaps_created += 1
+    for cid, kept in kept_chunks.items():
+        if kept:
+            placeholders = ",".join("?" * len(kept))
+            conn.execute(
+                "DELETE FROM links WHERE clause_id = ? AND"
+                " durable_document_id = ? AND chunk_id NOT IN (%s)" %
+                placeholders,
+                (cid, doc["durable_document_id"], *kept))
+        conn.execute(
+            "DELETE FROM gaps WHERE clause_id = ? AND durable_document_id = ?",
+            (cid, doc["durable_document_id"]))
     conn.commit()
     return gaps_created
 
