@@ -1,3 +1,5 @@
+import json as _json
+
 import yaml
 
 from . import db, ingest
@@ -24,6 +26,11 @@ def build_links(client, conn, clauses: list[dict]):
     for doc in docs:
         entry = roster.get(doc["session_slot_id"], {})
         html = entry.get("html") or ""
+        if not html.strip():
+            results.append({"doc": doc["name"], "links_added": 0,
+                            "ops_charged": 0, "parse_failed": False,
+                            "skipped": "no html in roster"})
+            continue
         chunks = ingest.extract_chunks(html)
         clause_list = "; ".join(
             f"{c['id']} ({c['title']})" for c in clauses if c["linkable"])
@@ -31,7 +38,15 @@ def build_links(client, conn, clauses: list[dict]):
             LINK_PROMPT.replace("{clauses}", clause_list), session_id,
             document_id=doc["session_slot_id"],
             latency_class="verification_turn")
-        mappings = parse_json_block(resp.get("response", ""))
+        try:
+            mappings = parse_json_block(resp.get("response", ""))
+            if not isinstance(mappings, list):
+                raise ValueError("mapping is not a JSON array")
+        except (ValueError, _json.JSONDecodeError) as exc:
+            print(f"WARN: could not parse mapping for {doc['name']}: {exc}")
+            results.append({"doc": doc["name"], "links_added": 0,
+                            "ops_charged": _ops(resp), "parse_failed": True})
+            continue
         by_chunk = {c["chunk_id"]: c for c in chunks}
         job_id = resp.get("job_id") or "sync-chat"
         now = db.now()
@@ -53,7 +68,7 @@ def build_links(client, conn, clauses: list[dict]):
             added += 1
         conn.commit()
         results.append({"doc": doc["name"], "links_added": added,
-                        "ops_charged": _ops(resp)})
+                        "ops_charged": _ops(resp), "parse_failed": False})
     return results
 
 

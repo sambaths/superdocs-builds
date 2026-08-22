@@ -129,7 +129,14 @@ def run_recheck(client, conn, scope_clauses=None) -> dict:
             VERIFY_PROMPT.replace("{clauses}", clause_list), session_id,
             document_id=doc["session_slot_id"],
             latency_class="verification_turn")
-        verdicts = parse_verdicts(resp.get("response", ""))
+        try:
+            verdicts = parse_verdicts(resp.get("response", ""))
+        except ValueError as exc:
+            print(f"WARN: could not parse verification verdicts for "
+                  f"{doc['name']}: {exc}")
+            results.append({"name": doc["name"], "status": "unparsed",
+                            "reason": str(exc)[:120]})
+            continue
         job_id = resp.get("job_id") or "sync-chat"
         now = db.now()
         gaps_created = _apply_verdicts(conn, doc, verdicts, job_id, now)

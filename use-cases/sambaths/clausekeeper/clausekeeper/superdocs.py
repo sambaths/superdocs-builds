@@ -45,8 +45,10 @@ class HttpTransport:
 
 
 class FixtureTransport:
-    def __init__(self, script_path: str | Path):
-        self.steps = _json.loads(Path(script_path).read_text())
+    def __init__(self, script_path: str | Path | list):
+        script = script_path if isinstance(script_path, list) else \
+            _json.loads(Path(script_path).read_text())
+        self.steps = script
         self.calls: list[tuple[str, str]] = []
         self.bodies: list[dict | None] = []
 
@@ -260,5 +262,7 @@ def parse_json_block(text: str):
     raw = fenced.group(1) if fenced else text
     match = re.search(r"\[.*\]|\{.*\}", raw, re.S)
     if not match:
-        raise ValueError("no JSON object found in model response")
+        head = re.sub(r"\s+", " ", (text or "")).strip()[:300]
+        raise ValueError(
+            f"no JSON object found in model response; response began: {head!r}")
     return _json.loads(match.group(0))

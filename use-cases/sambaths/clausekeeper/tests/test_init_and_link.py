@@ -42,6 +42,43 @@ def test_seed_holes_detected_by_audit(seeded_conn):
     assert by_seed["SEED-H2"]["detected"] is True
 
 
+def test_unparseable_mapping_skips_doc_without_killing_pass(seeded_conn):
+    from conftest import client_for as base_client_for
+    from clausekeeper.library import LIBRARY_PATH, load_library
+    from clausekeeper.superdocs import FixtureTransport, SuperDocsClient
+
+    starts = [{"job_id": f"job_garbage_{i}", "status": "pending"}
+              for i in range(6)]
+    polls = []
+    for i in range(6):
+        polls.append({"job_id": f"job_garbage_{i}", "status": "completed",
+                      "result": {"response":
+                                 "I reviewed the document and it looks well "
+                                 "aligned with the standard.",
+                                 "usage": {"ops_charged": 1,
+                                           "was_billable": True,
+                                           "monthly_remaining": 480}}})
+    roster = {"documents": [
+        {"document_id": f"doc_p0{n}", "html":
+         '<h1>t</h1><div data-chunk-id="cx"><h2>s</h2><p>body</p></div>'}
+        for n in (2, 3, 4, 5, 6)] + [
+        {"document_id": "doc_qm01", "html":
+         '<h1>t</h1><div data-chunk-id="cx9"><h2>s</h2><p>body</p></div>'}]}
+    script = [
+        {"method": "GET", "path": "/v1/sessions/ck-demo-01/documents",
+         "params": {"include_html": "true"}, "responses": [roster]},
+        {"method": "POST", "path": "/v1/chat/async", "responses": starts},
+        {"method": "GET", "path": "/v1/jobs/{id}", "responses": polls},
+    ]
+    client = SuperDocsClient(FixtureTransport(script))
+    results = linking.build_links(client, seeded_conn,
+                                  load_library(LIBRARY_PATH))
+    assert len(results) == 6
+    assert all(r["parse_failed"] for r in results)
+    before = seeded_conn.execute("SELECT COUNT(*) n FROM links").fetchone()["n"]
+    assert before > 0
+
+
 def test_link_costs_one_op_per_document(conn):
     client = client_for("init_link.json")
     ingest.init_session(client, conn, str(CORPUS))
