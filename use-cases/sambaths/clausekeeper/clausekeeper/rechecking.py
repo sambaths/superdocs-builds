@@ -52,6 +52,12 @@ def detect_changed(client, conn) -> dict:
         if not row:
             continue
         new_name = entry.get("name")
+        if not new_name and row["durable_document_id"]:
+            try:
+                detail = client.document_detail(row["durable_document_id"])
+                new_name = detail.get("title")
+            except Exception:
+                new_name = None
         if new_name and new_name != row["name"] and slot not in renamed_set:
             conn.execute(
                 "UPDATE documents SET name = ? WHERE session_slot_id = ?",

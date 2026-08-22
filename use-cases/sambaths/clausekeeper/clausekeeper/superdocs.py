@@ -158,6 +158,10 @@ class SuperDocsClient:
         return self.t.request(
             "GET", f"/v1/documents/{document_id}")
 
+    def document_detail(self, durable_document_id: str) -> dict:
+        return self.t.request("GET",
+                              f"/v1/documents/{durable_document_id}")
+
     def chat(self, message: str, session_id: str, document_id: str | None = None,
              approval_mode: str | None = None) -> dict:
         body = {"message": message, "session_id": session_id,
