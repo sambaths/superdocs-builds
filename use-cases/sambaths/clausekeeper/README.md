@@ -79,6 +79,9 @@ python -m clausekeeper link
 python -m clausekeeper show
 ```
 
+Alternatively, put `SUPERDOCS_API_KEY=…` in a `.env` file next to this README —
+the CLI loads it automatically (the file is gitignored).
+
 Optional env vars: `SUPERDOCS_BASE_URL`, `CK_OPS_FLOOR`, `CK_MAX_TURNS`,
 `CK_POLL_INTERVAL`.
 

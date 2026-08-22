@@ -53,6 +53,7 @@ def detect_changed(client, conn) -> dict:
     checked_now, already_checked = [], []
     for slot, doc in changed.items():
         html = (roster_by_slot.get(slot) or {}).get("html", "")
+        doc["html"] = html
         new_hash = ingest.content_hash(html)
         doc["version_hash"] = new_hash
         run_key = f"{slot}:{new_hash}"
@@ -93,16 +94,19 @@ def build_plan(client, conn, detection: dict, scope_clauses=None) -> dict:
 
 
 VERIFY_PROMPT = (
-    "You are our quality-assurance assistant; I am the QA manager. The "
-    "procedure open in this session was edited and I need to know which "
-    "clauses still have supporting sections.\n\n"
+    "You are our quality-assurance assistant; I am the QA manager. One of our "
+    "internal procedure documents is open in this session; it was recently "
+    "edited and I need to know which clauses still have supporting sections."
+    "\n\n"
+    "Quietly read EVERY section from start to finish - do not stop partway to "
+    "ask whether to continue - then answer once.\n\n"
     "Rules:\n"
-    "- Analysis only - do not create, modify, export, or summarize into any "
+    "- Analysis only: do not create, modify, export, or summarize into any "
     "document; reply in chat.\n"
-    "- For each clause below return one object with keys: clause_id, status "
-    "(\"covered\" or \"gap\"), chunk_id (data-chunk-id of an evidencing block "
-    "or null), heading_path (or null).\n"
-    "- Include every clause even when all are gaps.\n"
+    "- For each clause listed at the end return one object with keys: "
+    "clause_id, status (\"covered\" or \"gap\"), heading_path (the exact "
+    "title of a section that provides evidence, or null).\n"
+    "- Include every listed clause even if all are gaps.\n"
     "- End your reply with the complete array in a ```json fenced code block."
     "\n\nClauses: {clauses}"
 )
@@ -145,7 +149,9 @@ def run_recheck(client, conn, scope_clauses=None) -> dict:
             continue
         job_id = resp.get("job_id") or "sync-chat"
         now = db.now()
-        gaps_created = _apply_verdicts(conn, doc, verdicts, job_id, now)
+        chunks = ingest.extract_chunks(doc.get("html", ""))
+        gaps_created = _apply_verdicts(conn, doc, verdicts, job_id, now,
+                                       chunks)
         charged = _ops(resp)
         guards.mark_run(conn, doc["run_key"], "recheck", charged)
         results.append({"name": doc["name"], "clauses_checked": len(clauses),
@@ -172,15 +178,27 @@ def _ops(resp: dict) -> int:
     return int((resp.get("usage") or {}).get("ops_charged", 0))
 
 
-def _apply_verdicts(conn, doc, verdicts, job_id, now) -> int:
+def _apply_verdicts(conn, doc, verdicts, job_id, now, chunks=None) -> int:
+    chunks = chunks or []
+    by_chunk = {c["chunk_id"]: c for c in chunks}
     gaps_created = 0
     for v in verdicts:
         cid = str(v.get("clause_id"))
         status = str(v.get("status", "")).lower()
         if status == "covered":
-            chunk_id = v.get("chunk_id") or "unknown"
-            heading = v.get("heading_path") or "(section)"
-            quote = (v.get("quote") or "")[:200]
+            chunk = None
+            if v.get("chunk_id"):
+                chunk = by_chunk.get(str(v["chunk_id"]))
+            if not chunk:
+                chunk = ingest.find_chunk_by_heading(chunks,
+                                                     v.get("heading_path"))
+            if not chunk:
+                print(f"WARN: {doc['name']}: could not resolve section "
+                      f"'{v.get('heading_path')}' for clause {cid}; skipped")
+                continue
+            chunk_id = chunk["chunk_id"]
+            heading = v.get("heading_path") or chunk["heading_path"]
+            quote = chunk["quote_excerpt"]
             existing = conn.execute(
                 "SELECT link_id FROM links WHERE clause_id = ? AND"
                 " durable_document_id = ? AND chunk_id = ?",

@@ -277,11 +277,21 @@ def _blocking_job_id(error_text: str) -> str | None:
 
 
 def parse_json_block(text: str):
-    fenced = re.search(r"```(?:json)?\s*(\[.*?\]|\{.*?\})\s*```", text, re.S)
+    fenced = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.S)
     raw = fenced.group(1) if fenced else text
-    match = re.search(r"\[.*\]|\{.*\}", raw, re.S)
-    if not match:
-        head = re.sub(r"\s+", " ", (text or "")).strip()[:300]
-        raise ValueError(
-            f"no JSON object found in model response; response began: {head!r}")
-    return _json.loads(match.group(0))
+    array = re.search(r"\[.*\]", raw, re.S)
+    if array:
+        return _json.loads(array.group(0))
+    obj = re.search(r"\{.*\}", raw, re.S)
+    if obj:
+        parsed = _json.loads(obj.group(0))
+        if isinstance(parsed, list):
+            return parsed
+        for key in ("mappings", "clauses", "results", "matrix", "items",
+                    "data", "coverage"):
+            if isinstance(parsed.get(key), list):
+                return parsed[key]
+        return [parsed]
+    head = re.sub(r"\s+", " ", (text or "")).strip()[:300]
+    raise ValueError(
+        f"no JSON object found in model response; response began: {head!r}")

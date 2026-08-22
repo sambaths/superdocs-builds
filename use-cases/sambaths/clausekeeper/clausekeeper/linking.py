@@ -7,20 +7,19 @@ from .superdocs import parse_json_block
 
 LINK_PROMPT = (
     "You are our quality-assurance assistant working inside our organization's "
-    "documentation workspace; I am the QA manager. Open in this session is one "
-    "of our internal procedure documents. I need a plain indexing pass:\n\n"
-    "For each ISO 9001:2015 clause listed below, check whether our document "
-    "has a section that provides evidence for that clause.\n\n"
+    "documentation workspace; I am the QA manager. One of our internal "
+    "procedure documents is open in this session.\n\n"
+    "Task: quietly read EVERY section of the document from start to finish - "
+    "do not stop partway and ask whether to continue - then produce a clause "
+    "coverage index for the ISO 9001:2015 clauses listed at the end.\n\n"
     "Rules:\n"
-    "- Analysis only - do not create, modify, export, or summarize into any "
+    "- Analysis only: do not create, modify, export, or summarize into any "
     "document; reply in chat.\n"
-    "- Return one object per clause with keys: clause_id, status "
-    "(\"covered\" or \"not-covered\"), chunk_id (the data-chunk-id attribute "
-    "of an evidencing block, or null), heading_path (its section heading, or "
-    "null).\n"
-    "- Include every clause even when nothing is covered (all statuses would "
-    "be \"not-covered\").\n"
-    "- No commentary needed before the array.\n"
+    "- Answer once, after reading everything.\n"
+    "- For each listed clause return one object with keys: clause_id, status "
+    "(\"covered\" or \"not-covered\"), heading_path (the exact title of the "
+    "section in our document that provides evidence, or null).\n"
+    "- Include every listed clause even if none are covered.\n"
     "- End your reply with the complete array in a ```json fenced code block."
     "\n\nClauses: {clauses}"
 )
@@ -65,11 +64,19 @@ def build_links(client, conn, clauses: list[dict]):
         for m in mappings:
             if str(m.get("status", "")).lower() != "covered":
                 continue
-            chunk = by_chunk.get(str(m.get("chunk_id")))
+            chunk = None
+            if m.get("chunk_id"):
+                chunk = by_chunk.get(str(m.get("chunk_id")))
             if not chunk:
+                chunk = ingest.find_chunk_by_heading(chunks,
+                                                     m.get("heading_path"))
+            if not chunk:
+                print(f"WARN: {doc['name']}: could not resolve section "
+                      f"'{m.get('heading_path')}' for clause "
+                      f"{m.get('clause_id')}; skipped")
                 continue
             heading = m.get("heading_path") or chunk["heading_path"]
-            quote = m.get("quote") or chunk["quote_excerpt"]
+            quote = chunk["quote_excerpt"]
             conn.execute(
                 "INSERT OR IGNORE INTO links(clause_id, durable_document_id, "
                 "chunk_id, heading_path, quote_excerpt, status, last_verified_at,"

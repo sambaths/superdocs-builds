@@ -74,29 +74,66 @@ HEADING_RE = re.compile(r"<h([1-6])[^>]*>(.*?)</h\1>", re.S)
 TAG_RE = re.compile(r"<[^>]+>")
 
 
+def _norm(text: str) -> str:
+    text = TAG_RE.sub("", text or "").lower()
+    text = re.sub(r"^\s*\d+(\.\d+)*\s*", "", text)
+    text = re.sub(r"[^a-z0-9 ]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def find_chunk_by_heading(chunks: list[dict], heading) -> dict | None:
+    if not heading:
+        return None
+    target = _norm(str(heading))
+    if not target:
+        return None
+    best, best_score = None, 0.0
+    for c in chunks:
+        cand = _norm(c["heading_path"])
+        full = _norm(c["heading_path"].split(">")[-1])
+        if not cand:
+            continue
+        if target == cand or target == full:
+            return c
+        score = 0.0
+        if target in cand or cand in target:
+            score = max(len(target), len(cand)) / (
+                min(len(target), len(cand)) + 1e-9)
+            score = min(score, 1.0)
+        else:
+            t_tokens, c_tokens = set(target.split()), set(cand.split())
+            if t_tokens and c_tokens:
+                score = len(t_tokens & c_tokens) / len(
+                    t_tokens | c_tokens)
+        if score > best_score:
+            best, best_score = c, score
+    return best if best_score >= 0.5 else None
+
+
 def extract_chunks(html: str) -> list[dict]:
-    chunks = []
     positions = [(m.start(), m.group(1)) for m in CHUNK_RE.finditer(html)]
-    headings = [(m.start(), int(m.group(1)), TAG_RE.sub("", m.group(2)).strip())
+    if not positions:
+        return []
+    headings = [(m.start(), int(m.group(1)),
+                 TAG_RE.sub("", m.group(2)).strip())
                 for m in HEADING_RE.finditer(html)]
-
-    def heading_at(pos: int) -> str:
-        stack: dict[int, str] = {}
-        parts = []
-        for hpos, level, text in headings:
-            if hpos > pos:
-                break
-            stack[level] = text
-            stack = {k: v for k, v in stack.items() if k <= level}
-        for lvl in sorted(stack):
-            parts.append(stack[lvl])
-        return " > ".join(parts) if parts else "(front matter)"
-
-    for idx, (pos, chunk_id) in enumerate(positions):
+    out = []
+    seen = 0
+    stack: dict[int, str] = {}
+    for idx, (start, cid) in enumerate(positions):
         end = positions[idx + 1][0] if idx + 1 < len(positions) else len(html)
-        body = html[pos:end]
-        text = TAG_RE.sub(" ", body)
-        quote = re.sub(r"\s+", " ", text).strip()
-        chunks.append({"chunk_id": chunk_id, "heading_path": heading_at(pos),
-                       "quote_excerpt": quote[:200]})
-    return chunks
+        while seen < len(headings) and headings[seen][0] < end:
+            _, level, text = headings[seen]
+            for k in [k for k in list(stack) if k >= level]:
+                del stack[k]
+            stack[level] = text
+            seen += 1
+        parts = [stack[k] for k in sorted(stack)]
+        body = html[start:end]
+        quote = re.sub(r"\s+", " ", TAG_RE.sub(" ", body)).strip()
+        out.append({
+            "chunk_id": cid,
+            "heading_path": " > ".join(parts) if parts else "(front matter)",
+            "quote_excerpt": quote[:200],
+        })
+    return out

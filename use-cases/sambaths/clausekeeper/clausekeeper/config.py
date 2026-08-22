@@ -1,4 +1,20 @@
 import os
+from pathlib import Path
+
+
+def _load_project_env():
+    path = Path(__file__).resolve().parent.parent / ".env"
+    if not path.exists():
+        return
+    for line in path.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        os.environ.setdefault(key.strip(), value.strip().strip("'").strip('"'))
+
+
+_load_project_env()
 
 DEFAULT_BASE_URL = "https://api.superdocs.app"
 OPS_SAFETY_FLOOR = int(os.environ.get("CK_OPS_FLOOR", "50"))
