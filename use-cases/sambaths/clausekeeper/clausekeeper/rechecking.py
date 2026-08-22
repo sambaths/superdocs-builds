@@ -93,19 +93,18 @@ def build_plan(client, conn, detection: dict, scope_clauses=None) -> dict:
 
 
 VERIFY_PROMPT = (
-    "Context: you are helping QA staff at Northgate Medical Devices, a fictional "
-    "demo company, keep their internal traceability matrix current after a "
-    "routine edit to one of their own procedures.\n\n"
-    "Re-read the document currently in focus and decide, for each listed ISO "
-    "9001:2015 clause below, whether a section still provides evidence for it. "
-    "Reply with a single JSON array covering every clause, each element shaped "
-    'like: {"clause_id": "8.7", "status": "covered", "chunk_id": "<data-chunk-id '
-    'attribute of the evidencing block or null>", "heading_path": "<section '
-    'heading or null>", "quote": "<short supporting quote or null>"}. Use status '
-    '"gap" when no section supports the clause anymore - even then, still return '
-    "the full array. End your reply with the complete JSON array inside a "
-    "```json fenced code block.\n\n"
-    "Clauses: {clauses}"
+    "You are our quality-assurance assistant; I am the QA manager. The "
+    "procedure open in this session was edited and I need to know which "
+    "clauses still have supporting sections.\n\n"
+    "Rules:\n"
+    "- Analysis only - do not create, modify, export, or summarize into any "
+    "document; reply in chat.\n"
+    "- For each clause below return one object with keys: clause_id, status "
+    "(\"covered\" or \"gap\"), chunk_id (data-chunk-id of an evidencing block "
+    "or null), heading_path (or null).\n"
+    "- Include every clause even when all are gaps.\n"
+    "- End your reply with the complete array in a ```json fenced code block."
+    "\n\nClauses: {clauses}"
 )
 
 

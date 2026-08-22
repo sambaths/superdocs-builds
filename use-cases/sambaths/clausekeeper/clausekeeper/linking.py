@@ -6,27 +6,23 @@ from . import db, ingest
 from .superdocs import parse_json_block
 
 LINK_PROMPT = (
-    "Context: you are helping QA staff at Northgate Medical Devices, a fictional "
-    "demo company, build an internal traceability matrix that maps their own "
-    "quality procedures to ISO 9001:2015 clauses. This is ordinary document "
-    "indexing work; their procedures discuss routine quality topics such as "
-    "document control, competence training, supplier scorecards, and control of "
-    "nonconforming product.\n\n"
-    "The document currently in focus is one of their internal procedures. For "
-    "each clause listed below, decide whether THIS document contains a section "
-    "that provides evidence for it.\n\n"
-    "Reply with a single JSON array covering EVERY clause in the same order, "
-    "each element shaped like:\n"
-    '[{"clause_id": "7.5", "status": "covered", "chunk_id": "<data-chunk-id '
-    'attribute of the evidencing block>", "heading_path": "<section heading>", '
-    '"quote": "<a short supporting quote copied from the document>"}]\n'
-    'Use "not-covered" as the status when a clause has no supporting section - '
-    "even if that is true for every clause, still return the full array with "
-    'status "not-covered" throughout. Copy quotes verbatim so auditors can '
-    "verify them.\n\n"
-    "End your reply with the complete JSON array inside a ```json fenced code "
-    "block.\n\n"
-    "Clauses: {clauses}"
+    "You are our quality-assurance assistant working inside our organization's "
+    "documentation workspace; I am the QA manager. Open in this session is one "
+    "of our internal procedure documents. I need a plain indexing pass:\n\n"
+    "For each ISO 9001:2015 clause listed below, check whether our document "
+    "has a section that provides evidence for that clause.\n\n"
+    "Rules:\n"
+    "- Analysis only - do not create, modify, export, or summarize into any "
+    "document; reply in chat.\n"
+    "- Return one object per clause with keys: clause_id, status "
+    "(\"covered\" or \"not-covered\"), chunk_id (the data-chunk-id attribute "
+    "of an evidencing block, or null), heading_path (its section heading, or "
+    "null).\n"
+    "- Include every clause even when nothing is covered (all statuses would "
+    "be \"not-covered\").\n"
+    "- No commentary needed before the array.\n"
+    "- End your reply with the complete array in a ```json fenced code block."
+    "\n\nClauses: {clauses}"
 )
 
 
