@@ -93,12 +93,17 @@ def build_plan(client, conn, detection: dict, scope_clauses=None) -> dict:
 
 
 VERIFY_PROMPT = (
-    "Re-verify this document against the listed ISO 9001:2015 clauses after a "
-    "recent edit. For each clause decide covered or gap based ONLY on current "
-    "document content. Respond with ONLY a JSON array: [{\"clause_id\": \"...\","
-    " \"status\": \"covered\"|\"gap\", \"chunk_id\": \"<data-chunk-id or null>\","
-    " \"heading_path\": \"<heading or null>\", \"quote\": \"<short quote or"
-    " null>\"}]. Clauses: {clauses}"
+    "Context: you are helping QA staff at Northgate Medical Devices, a fictional "
+    "demo company, keep their internal traceability matrix current after a "
+    "routine edit to one of their own procedures.\n\n"
+    "Re-read the document currently in focus and decide, for each listed ISO "
+    "9001:2015 clause below, whether a section still provides evidence for it. "
+    "Reply with a single JSON array covering every clause, each element shaped "
+    'like: {"clause_id": "8.7", "status": "covered", "chunk_id": "<data-chunk-id '
+    'attribute of the evidencing block or null>", "heading_path": "<section '
+    'heading or null>", "quote": "<short supporting quote or null>"}. Use status '
+    '"gap" when no section supports the clause anymore.\n\n'
+    "Clauses: {clauses}"
 )
 
 

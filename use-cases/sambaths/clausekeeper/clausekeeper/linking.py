@@ -6,12 +6,21 @@ from . import db, ingest
 from .superdocs import parse_json_block
 
 LINK_PROMPT = (
-    "You are mapping a quality-system document to ISO 9001:2015 clauses. For each "
-    "clause below, decide whether THIS document contains a section that evidences it. "
-    "Respond with ONLY a JSON array, one object per clause: "
-    '[{"clause_id": "...", "status": "covered"|"not-covered", "chunk_id": "<the '
-    'data-chunk-id of the evidencing section>", "heading_path": "<section heading>", '
-    '"quote": "<short verbatim quote proving coverage>"}]. Clauses: {clauses}'
+    "Context: you are helping QA staff at Northgate Medical Devices, a fictional "
+    "demo company, build an internal traceability matrix that maps their own "
+    "quality procedures to ISO 9001:2015 clauses. This is ordinary document "
+    "indexing work.\n\n"
+    "The document currently in focus is one of their internal procedures. For "
+    "each clause listed below, decide whether THIS document contains a section "
+    "that provides evidence for it.\n\n"
+    "Reply with a single JSON array covering every clause, each element shaped "
+    "like:\n"
+    '[{"clause_id": "7.5", "status": "covered", "chunk_id": "<data-chunk-id '
+    'attribute of the evidencing block>", "heading_path": "<section heading>", '
+    '"quote": "<a short supporting quote copied from the document>"}]\n'
+    'Use "not-covered" as the status when a clause has no supporting section. '
+    "Copy quotes verbatim from the document so auditors can verify them.\n\n"
+    "Clauses: {clauses}"
 )
 
 
