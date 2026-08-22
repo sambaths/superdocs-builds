@@ -46,3 +46,12 @@ def test_parser_prefers_fenced_array_and_reports_garbage():
     import pytest
     with pytest.raises(ValueError):
         parse_json_block("no structure at all in this reply")
+
+
+def test_keyfile_parser_handles_export_and_comments():
+    from clausekeeper.config import _parse_env_line
+    assert _parse_env_line("export SUPERDOCS_API_KEY=sk_x # note") == \
+        ("SUPERDOCS_API_KEY", "sk_x")
+    assert _parse_env_line("PLAIN=\"abc\"") == ("PLAIN", "abc")
+    assert _parse_env_line("# comment") is None
+    assert _parse_env_line("no equals here") is None

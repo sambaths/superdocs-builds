@@ -2,16 +2,25 @@ import os
 from pathlib import Path
 
 
+def _parse_env_line(line: str):
+    line = line.strip()
+    if not line or line.startswith("#") or "=" not in line:
+        return None
+    if line.startswith("export "):
+        line = line[len("export "):].strip()
+    key, _, value = line.partition("=")
+    value = value.split(" #")[0].strip().strip("'").strip('"')
+    return key.strip(), value
+
+
 def _load_project_env():
     path = Path(__file__).resolve().parent.parent / ".env"
     if not path.exists():
         return
     for line in path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, _, value = line.partition("=")
-        os.environ.setdefault(key.strip(), value.strip().strip("'").strip('"'))
+        parsed = _parse_env_line(line)
+        if parsed:
+            os.environ.setdefault(*parsed)
 
 
 _load_project_env()
