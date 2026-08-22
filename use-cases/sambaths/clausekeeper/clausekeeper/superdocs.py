@@ -24,6 +24,7 @@ class HttpTransport:
     def __init__(self, api_key: str | None = None, base_url: str | None = None):
         self._key = api_key if api_key is not None else config.api_key()
         self._base = (base_url or config.base_url()).rstrip("/")
+        self.last_headers: dict = {}
 
     def request(self, method: str, path: str, *, params=None, json_body=None,
                 data=None, files=None):
@@ -33,6 +34,7 @@ class HttpTransport:
             method, url, params=params, json=json_body, data=data,
             files=files, headers=headers, timeout=60,
         )
+        self.last_headers = dict(resp.headers)
         if resp.status_code >= 400:
             raise ApiError(f"{method} {path} -> {resp.status_code}: {resp.text[:500]}")
         if not resp.content:
@@ -51,6 +53,7 @@ class FixtureTransport:
         self.steps = script
         self.calls: list[tuple[str, str]] = []
         self.bodies: list[dict | None] = []
+        self.last_headers: dict = {}
 
     def request(self, method: str, path: str, *, params=None, json_body=None,
                 data=None, files=None):
@@ -69,9 +72,16 @@ class FixtureTransport:
             if any(str(want[k]) != v for k, v in step_params.items()):
                 continue
             responses = step["responses"]
+            head = responses[0]
             if len(responses) > 1:
                 step["responses"] = responses[1:]
-            return responses[0]
+            headers = dict(step.get("headers") or {})
+            if isinstance(head, dict) and head.get("headers"):
+                merged = dict(head)
+                headers.update(merged.pop("headers") or {})
+                head = merged
+            self.last_headers = headers
+            return head
         raise LookupError(f"no fixture step for {method} {path}")
 
 
@@ -161,6 +171,58 @@ class SuperDocsClient:
     def document_detail(self, durable_document_id: str) -> dict:
         return self.t.request("GET",
                               f"/v1/documents/{durable_document_id}")
+
+    def upload_template(self, filepath: str) -> dict:
+        name = Path(filepath).name
+        with open(filepath, "rb") as fh:
+            return self.t.request("POST", "/v1/templates/upload",
+                                  files={"file": (name, fh)})
+
+    def list_templates(self) -> dict:
+        return self.t.request("GET", "/v1/templates")
+
+    def focus_document(self, session_id: str, document_id: str) -> dict:
+        return self.t.request(
+            "POST",
+            f"/v1/sessions/{session_id}/documents/{document_id}/focus")
+
+    def request_download(self, session_id: str, fmt: str,
+                         filename: str | None = None) -> dict:
+        body: dict = {"session_id": session_id, "format": fmt}
+        if filename:
+            body["filename"] = filename
+        return self.t.request("POST", "/v1/downloads", json_body=body)
+
+    def last_response_headers(self) -> dict:
+        return dict(getattr(self.t, "last_headers", {}) or {})
+
+    def export_warnings(self) -> list[str]:
+        import base64
+        raw = self.last_response_headers().get("X-Export-Warnings")
+        if not raw:
+            return []
+        try:
+            decoded = _json.loads(base64.b64decode(raw).decode("utf-8"))
+        except Exception:
+            return [str(raw)]
+        if isinstance(decoded, list):
+            return [str(item) for item in decoded]
+        return [str(decoded)]
+
+    def fetch_to_file(self, url: str, path: str) -> int:
+        if isinstance(self.t, FixtureTransport):
+            payload = f"fixture-download:{url[:120]}".encode()
+            Path(path).write_bytes(payload)
+            return len(payload)
+        size = 0
+        with requests.get(url, stream=True, timeout=120) as resp:
+            resp.raise_for_status()
+            with open(path, "wb") as fh:
+                for chunk in resp.iter_content(chunk_size=65536):
+                    if chunk:
+                        fh.write(chunk)
+                        size += len(chunk)
+        return size
 
     def chat(self, message: str, session_id: str, document_id: str | None = None,
              approval_mode: str | None = None) -> dict:

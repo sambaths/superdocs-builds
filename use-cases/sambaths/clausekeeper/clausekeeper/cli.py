@@ -3,7 +3,7 @@ import json
 import os
 import sys
 
-from . import db, editing, ingest, linking, rechecking
+from . import db, editing, ingest, linking, packing, rechecking
 from .library import LIBRARY_PATH, load_library, sample_ids, subset
 from .superdocs import FixtureTransport, HttpTransport, OpsFloorExceeded, SuperDocsClient
 
@@ -100,7 +100,21 @@ def cmd_recheck(args):
         print(f"total ops this run: {summary['ops_spent']}")
     except OpsFloorExceeded as exc:
         print(f"STOPPED: {exc}")
-    except OpsFloorExceeded as exc:
+        sys.exit(2)
+    finally:
+        conn.close()
+
+
+def cmd_pack(args):
+    conn = db.connect(args.db)
+    client = build_client(args)
+    try:
+        summary = packing.build_pack(
+            client, conn, template_path=args.template, out_dir=args.out,
+            filename=args.filename, library_path=args.library)
+        persist_usage(conn, client)
+        print(json.dumps(summary, indent=2))
+    except (OpsFloorExceeded, packing.LanguageRailError) as exc:
         print(f"STOPPED: {exc}")
         sys.exit(2)
     finally:
@@ -207,6 +221,15 @@ def main(argv=None):
     p = sub.add_parser("show", help="print the matrix and open gaps")
     p.add_argument("--verbose", action="store_true")
 
+    p = sub.add_parser(
+        "pack",
+        help="generate the branded audit-readiness pack and export it")
+    p.add_argument("--template",
+                   help="letterhead DOCX to upload once (reused after)")
+    p.add_argument("--out", default="exports",
+                   help="directory for exported files")
+    p.add_argument("--filename", default="northgate-audit-readiness-pack")
+
     p = sub.add_parser("sample-ids", help="list the demo sample subset")
     p.set_defaults(func=lambda a: print("\n".join(sample_ids(a.library))))
 
@@ -215,7 +238,8 @@ def main(argv=None):
         args.func(args)
         return
     {"init": cmd_init, "link": cmd_link, "edit": cmd_edit,
-     "recheck": cmd_recheck, "show": cmd_show}[args.command](args)
+     "recheck": cmd_recheck, "show": cmd_show,
+     "pack": cmd_pack}[args.command](args)
 
 
 if __name__ == "__main__":

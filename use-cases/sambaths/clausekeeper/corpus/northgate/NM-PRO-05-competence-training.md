@@ -4,7 +4,7 @@ Document code: NM-PRO-05 · Revision C · Owner: HR Lead · Status: Approved
 
 ## 1 Competence requirements
 
-Every role with quality impact has a defined competence profile in the training matrix: required education or experience, procedure training, and any certification (for example, solder inspection for final inspectors). The matrix is owned by the HR Lead and reviewed with managers each quarter.
+Every role with quality impact has a defined competence profile in the training matrix: required education or experience, procedure training, and any formal qualification records (for example, solder-inspection qualification for final inspectors). The matrix is owned by the HR Lead and reviewed with managers each quarter.
 
 ## 2 Training execution
 
