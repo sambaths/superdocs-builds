@@ -100,6 +100,9 @@ def _process_completed(client, conn, doc, job_id, instruction, result,
             gap_count += _land_gaps(conn, doc, diff, edit_id, instruction,
                                     job_id, occurred_at, now)
     _refresh_version_hash(client, conn, doc)
+    conn.execute(
+        "UPDATE documents SET needs_verify = 1 WHERE session_slot_id = ?",
+        (doc["session_slot_id"],))
     conn.commit()
     return {"job_id": job_id, "edits_recorded": len(diffs),
             "gaps_landed": gap_count}
@@ -107,17 +110,21 @@ def _process_completed(client, conn, doc, job_id, instruction, result,
 
 def _land_gaps(conn, doc, diff, edit_id, instruction, job_id, occurred_at,
                now) -> int:
-    chunk_ids = {diff.get("chunk_id")}
-    chunk_ids.update(ingest.CHUNK_RE.findall(diff.get("old_html") or ""))
-    chunk_ids.discard(None)
-    if not chunk_ids:
-        return 0
-    placeholders = ",".join("?" * len(chunk_ids))
-    rows = conn.execute(
-        "SELECT l.link_id, l.clause_id FROM links l WHERE "
-        "l.durable_document_id = ? AND l.chunk_id IN (%s) "
-        "AND l.status != 'gap'" % placeholders,
-        (doc["durable_document_id"], *chunk_ids)).fetchall()
+    def links_for(chunk_ids):
+        if not chunk_ids:
+            return []
+        placeholders = ",".join("?" * len(chunk_ids))
+        return conn.execute(
+            "SELECT l.link_id, l.clause_id FROM links l WHERE "
+            "l.durable_document_id = ? AND l.chunk_id IN (%s) "
+            "AND l.status != 'gap'" % placeholders,
+            (doc["durable_document_id"], *chunk_ids)).fetchall()
+
+    rows = links_for({diff.get("chunk_id")})
+    if not rows:
+        swept = set(ingest.CHUNK_RE.findall(diff.get("old_html") or ""))
+        swept.discard(None)
+        rows = links_for(swept)
     count = 0
     seen_clauses = set()
     for row in rows:

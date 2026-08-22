@@ -13,6 +13,11 @@ def connect(db_path: str) -> sqlite3.Connection:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     conn.executescript(SCHEMA_PATH.read_text())
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(documents)")]
+    if "needs_verify" not in cols:
+        conn.execute(
+            "ALTER TABLE documents ADD COLUMN needs_verify INTEGER"
+            " NOT NULL DEFAULT 0")
     return conn
 
 

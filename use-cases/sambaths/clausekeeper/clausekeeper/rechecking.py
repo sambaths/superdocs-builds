@@ -36,7 +36,6 @@ def detect_changed(client, conn) -> dict:
         changed[slot] = dict(row)
     conn.commit()
     db.set_meta(conn, "doc_events_cursor", str(max_event))
-
     roster_by_slot = {}
     for entry in client.roster(session_id, include_html=True,
                                report_changed=True):
@@ -50,8 +49,16 @@ def detect_changed(client, conn) -> dict:
         if row and guards.role_allows(dict(row)):
             changed[slot] = dict(row)
 
+    for row in conn.execute(
+            "SELECT * FROM documents WHERE needs_verify = 1").fetchall():
+        slot = row["session_slot_id"]
+        if guards.role_allows(dict(row)):
+            changed.setdefault(slot, dict(row))
+
     checked_now, already_checked = [], []
     for slot, doc in changed.items():
+        conn.execute("UPDATE documents SET needs_verify = 0 WHERE"
+                     " session_slot_id = ?", (slot,))
         html = (roster_by_slot.get(slot) or {}).get("html", "")
         doc["html"] = html
         new_hash = ingest.content_hash(html)

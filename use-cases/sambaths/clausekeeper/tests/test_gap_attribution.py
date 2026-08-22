@@ -31,7 +31,7 @@ def test_multi_chunk_section_delete_orphans_every_deleted_chunk(seeded_conn):
         "SELECT * FROM documents WHERE session_slot_id = 'doc_p04'"
         ).fetchone()
     diff = {"change_id": "chg_99", "operation": "delete",
-            "chunk_id": "h-chunk",
+            "chunk_id": "unrelated-new-id",
             "old_html": '<h2 data-chunk-id="h-chunk">3 Disposition of'
                         ' nonconforming devices</h2><p data-chunk-id='
                         '"p-chunk">Dispositions are decided by the QA'
