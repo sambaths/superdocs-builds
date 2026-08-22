@@ -21,3 +21,8 @@ Managers cover three awareness points in team meetings each quarter: why the qua
 ## 5 Records
 
 Training files, observation checklists, blind-test results, and acknowledgments are retained per NM-QM-01 and are available for review on request.
+
+## 6 Infrastructure and tools
+
+Training rooms, ESD-safe assembly benches, torque tools, and the blind-sample inspection kits used for verifier testing are inventoried annually by the HR Lead together with Operations. Damaged or out-of-calibration training equipment is tagged and pulled from use until repaired or replaced, and replacement needs are raised as budget items at the quarterly management review.
+

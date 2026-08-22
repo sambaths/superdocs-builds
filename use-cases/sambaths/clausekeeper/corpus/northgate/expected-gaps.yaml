@@ -20,13 +20,16 @@ seeds:
       communication itself.
     expect_detection_at: first link audit and every recheck
 
-# Scripted demo edit (UAT step 2 of ticket 0022): deleting section "Disposition of
-# nonconforming devices" from NM-PRO-04 must orphan clause 8.7 synchronously in the same
-# approve-response processing, with the gap narrative naming change_id, instruction, job, time.
+# Scripted demo edit (UAT step 2 of ticket 0022): deleting the NCR-evidence
+# sections from NM-PRO-04 must orphan clause 8.7 synchronously in the same
+# approve-response processing, with the gap narrative naming change_id,
+# instruction, job, time. Both sections are deleted because the mapping may
+# bind 8.7 to either (containment or disposition both evidence it).
 scripted_edit:
   document: NM-PRO-04-nonconforming-output.md
   instruction: >-
-    Delete the entire 'Disposition of nonconforming devices' section from this procedure;
+    Delete the sections 'Identifying and containing nonconforming output' and
+    'Disposition of nonconforming devices' from this procedure; containment and
     disposition decisions now live only in the ERP workflow.
   expected_gap_clause: "8.7"
   expect_detection_at: immediately after approve processing, before any verification turn
