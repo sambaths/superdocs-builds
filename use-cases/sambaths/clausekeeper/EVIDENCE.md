@@ -29,6 +29,7 @@ artifact you can check yourself — all keyless, all runnable by a stranger.
 | Claim | Measured | Trace |
 |---|---|---|
 | full clausekeeper demo cycle fits the ≤10-op gate | **9 billable ops**, `monthly_remaining` tracked throughout | usage ledger written per billable run (ticket-recorded UAT step 5, 2026-08-23) |
+| extra-credit weekly mode full pass costs one op | small-sample **0 ops**, full pass **1 op** | `out/weekly/usage.json` in the second repo (`doctask-sambaths` @ `c8ed1c9`) |
 
 ## Honesty notes
 
