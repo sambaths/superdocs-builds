@@ -33,6 +33,34 @@ def test_resolver_rejects_unknown_headings():
     assert ingest.find_chunk_by_heading(chunks, None) is None
 
 
+ATTR_SAMPLE = ('<h1>Procedure NM-PRO-04</h1>'
+               '<div class="chunk" id="s3" data-chunk-id="c87_hold">'
+               '<h2>Disposition</h2><p>The QA Manager decides.</p></div>'
+               '<p class="para" data-chunk-id="c_tail">Tail section'
+               ' content.</p>')
+
+
+def test_quotes_start_at_content_not_attribute_noise():
+    by_id = {c["chunk_id"]: c for c in ingest.extract_chunks(ATTR_SAMPLE)}
+    q = by_id["c87_hold"]["quote_excerpt"]
+    assert q.startswith("Disposition")
+    assert "data-chunk-id" not in q
+    assert not q.startswith("<")
+
+
+def test_quote_boundaries_exclude_neighbor_wrapper_tags():
+    by_id = {c["chunk_id"]: c for c in ingest.extract_chunks(ATTR_SAMPLE)}
+    prev = by_id["c87_hold"]["quote_excerpt"]
+    assert prev.endswith("decides.")
+    assert "Tail" not in prev and "<p" not in prev
+    assert by_id["c_tail"]["quote_excerpt"] == \
+        "Tail section content."
+
+
+def test_chunk_without_closing_tag_is_skipped_not_garbled():
+    assert ingest.extract_chunks('<h1>t</h1><div data-chunk-id="x"') == []
+
+
 def test_parser_accepts_dict_wrapped_arrays():
     text = 'Sure. {"mappings": [{"clause_id": "8.7", "status": "gap"}]}'
     out = parse_json_block(text)

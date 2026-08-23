@@ -4,7 +4,7 @@
 <circle cx="18" cy="15" r="5" fill="#ff5f57"/><circle cx="36" cy="15" r="5" fill="#febc2e"/><circle cx="54" cy="15" r="5" fill="#28c840"/>
 <text x="520.0" y="20" text-anchor="middle" fill="#8b949e" font-size="12">rename survival — links bound to durable ids, not names</text>
 <text x="24" y="60" fill="#79c0ff" xml:space="preserve">CLAUSE  STATUS   DOCUMENT                           SECTION</text>
-<text x="24" y="79" fill="#7ee787" xml:space="preserve">10.2    covered  NM-PRO-04-nonconforming-output-v2  4 Corrective action — data-chunk-id=&quot;41b2a747-032b-4e60-b1f5-556a033d3f01&quot;&gt;QA clas…</text>
-<text x="24" y="98" fill="#ff7b72" xml:space="preserve">8.7     gap      NM-PRO-04-nonconforming-output-v2  1 Identifying and containing nonconforming o — data-chunk-id=&quot;f5142f9c-9d78-4e19-a8ca-597f8c6fe5b7&quot;&gt;Documen…</text>
+<text x="24" y="79" fill="#7ee787" xml:space="preserve">10.2    covered  NM-PRO-04-nonconforming-output-v2  4 Corrective action — QA classifies each NCR within two business days: use-as-is (…</text>
+<text x="24" y="98" fill="#ff7b72" xml:space="preserve">8.7     gap      NM-PRO-04-nonconforming-output-v2  1 Identifying and containing nonconforming o — Document code: NM-PRO-04 · Revision F · Owner: QA Manager · …</text>
 <text x="24" y="136" fill="#8b949e" xml:space="preserve">2 matrix rows intact after renaming NM-PRO-04 -&gt; NM-PRO-04-nonconforming-output-v2</text>
 </svg>

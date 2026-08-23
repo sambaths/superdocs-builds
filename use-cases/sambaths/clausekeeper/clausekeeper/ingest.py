@@ -111,7 +111,12 @@ def find_chunk_by_heading(chunks: list[dict], heading) -> dict | None:
 
 
 def extract_chunks(html: str) -> list[dict]:
-    positions = [(m.start(), m.group(1)) for m in CHUNK_RE.finditer(html)]
+    positions = []
+    for m in CHUNK_RE.finditer(html):
+        tag_end = html.find(">", m.start())
+        if tag_end == -1:
+            continue
+        positions.append((tag_end + 1, m.group(1)))
     if not positions:
         return []
     headings = [(m.start(), int(m.group(1)),
