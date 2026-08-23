@@ -6,6 +6,10 @@ SCHEMA_PATH = Path(__file__).resolve().parent.parent / "schema.sql"
 
 
 def now() -> str:
+    import os
+    fixed = os.environ.get("CK_DETERMINISTIC_NOW")
+    if fixed:
+        return fixed
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 

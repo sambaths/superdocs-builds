@@ -8,3 +8,5 @@ clausekeeper.db
 .pytest_cache/
 .venv/
 .DS_Store
+docs/media/raw/*
+!docs/media/raw/MANIFEST.txt

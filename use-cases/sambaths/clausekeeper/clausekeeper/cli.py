@@ -10,6 +10,8 @@ from .superdocs import FixtureTransport, HttpTransport, OpsFloorExceeded, SuperD
 
 def build_client(args):
     fixture = getattr(args, "fixture", None) or os.environ.get("CK_FIXTURE")
+    if fixture:
+        os.environ.setdefault("CK_DETERMINISTIC_NOW", "2026-08-23T00:00:00Z")
     transport = FixtureTransport(fixture) if fixture else HttpTransport()
     return SuperDocsClient(transport)
 
