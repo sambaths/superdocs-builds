@@ -6,7 +6,7 @@ import pytest
 from clausekeeper import cli, db, rechecking
 from clausekeeper.superdocs import OpsFloorExceeded
 
-from conftest import CORPUS, FIXTURES as FIXTURES_DIR, client_for  # noqa: F401
+from conftest import CORPUS, FIXTURES as FIXTURES_DIR, client_for, seeded  # noqa: F401,E501
 from conftest import seeded_conn  # noqa: F401
 
 
@@ -49,3 +49,16 @@ def test_ops_floor_aborts_mid_run(seeded_conn):
     with pytest.raises(OpsFloorExceeded):
         rechecking.run_recheck(client, seeded_conn)
     assert any(u["monthly_remaining"] == 49 for u in client.usage_log)
+
+
+def test_ops_floor_recheck_exits_two(tmp_path, monkeypatch):
+    root = str(tmp_path / "floor.db")
+    conn = db.connect(root)
+    seeded(conn)
+    conn.close()
+    monkeypatch.setenv("CK_FIXTURE", str(FIXTURES_DIR / "ops_floor.json"))
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out), pytest.raises(SystemExit) as excinfo:
+        cli.main(["--db", root, "recheck"])
+    assert excinfo.value.code == 2
+    assert "STOPPED:" in out.getvalue()
