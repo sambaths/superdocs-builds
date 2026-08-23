@@ -159,6 +159,8 @@ letterhead branding), pre-signed downloads (`POST /v1/downloads`) with the
 
 ## Honest limits
 
+Live-test note (2026-08-23, 0 ops spent — see `scratch/issues/assets/0006-live-uat-discover.md` privately): the free-read lane worked live at 0 ops, but the single batched search turn exceeded SuperDocs' documented 300 s `verification_turn` max-wait (CLI aborted before mapping, no shortlist rows persisted) and, despite instructions never to invent entries, returned a plausible-looking candidate for seeded-gap clause 9.2 (no covering document by design) — worse than plain mapping on honesty. Shortlists are advisory only: nothing feeds the mapping turns automatically, and every search-sourced row should be treated as unverified until a human checks it.
+
 Readiness statements here are assessments against the ISO 9001:2015 *clause
 structure* only — not an audit, they grant no formal standing, and no
 external body has reviewed them. The clause
@@ -172,5 +174,3 @@ until a human reviews them at the approval flow.
 By default `link` maps clauses using one verification turn per document — SuperDocs search is never called. With `--discover`, clausekeeper first shortlists candidate evidence sections using free structural reads matched locally against section headings (0 billable ops). Clauses the free pass can't resolve go through **one batched SuperDocs search turn** (~+1 op, billed by your plan); it never exceeds one searching turn per run and never invents candidates — weak results are reported honestly and mapping falls back to the standard path. Reads can lag recent edits by a few seconds, so discovery always runs before any editing turns. Preview the spend first with `link --plan --discover` (0 ops).
 
 It's opt-in because search is the least proven surface in this build. When search isn't used: by default (`link` without the flag never calls it), when `--plan` previews, and when the local pass already covers every clause the batched turn is skipped (`search turn skipped — local shortlist covered every clause (0 ops)`).
-
-Live-test note (2026-08-23, 0 ops spent — see `scratch/issues/assets/0006-live-uat-discover.md` privately): the free-read lane worked live at 0 ops, but the single batched search turn exceeded SuperDocs' documented 300 s `verification_turn` max-wait (CLI aborted before mapping, no shortlist rows persisted) and, despite instructions never to invent entries, returned a plausible-looking candidate for seeded-gap clause 9.2 (no covering document by design) — worse than plain mapping on honesty. Shortlists are advisory only: nothing feeds the mapping turns automatically, and every search-sourced row should be treated as unverified until a human checks it.

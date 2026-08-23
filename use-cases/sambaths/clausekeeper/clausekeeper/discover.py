@@ -233,4 +233,4 @@ def _print_shortlist(rows, linkable):
 
 
 def _leader(name: str) -> str:
-    return f"{name} {'.' * max(3, 36 - len(name))}"
+    return f"{name} {'.' * max(3, 38 - len(name))}"
