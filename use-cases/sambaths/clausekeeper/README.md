@@ -8,6 +8,10 @@ re-triggers on its own output.
 
 Built for the SuperDocs builds showcase. Credit: sambaths (github.com/sambaths).
 
+## Findings & verification
+
+Deep material is visible in-tree: [FINDINGS.md](FINDINGS.md) (ten SuperDocs bugs we hit and reproduced) and [EVIDENCE.md](EVIDENCE.md) (every number traces to a named test or run output). Keyless verification: `python -m pytest -q` → **36 passed** in ~7 s (fixture-replay, no API key).
+
 ## What it does
 
 - `init` — bootstraps one SuperDocs multi-document session: uploads the demo QMS
@@ -81,7 +85,7 @@ uploaded once via `POST /v1/templates/upload` and reused for every later pack.
   unbounded.
 - A full small-sample cycle (init → link → guided edit → plan → recheck) costs about
   8 ops; adding the branded pack generation and both exports lands the whole demo
-  story around 9–10 ops. Exports and template upload are free; only the pack
+  story at **9 ops**. Exports and template upload are free; only the pack
   generation turn is billable.
 
 ## Demo corpus
