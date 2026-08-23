@@ -6,11 +6,11 @@ sections that cover it, re-checks the mapping whenever a procedure is edited, ra
 orphaned clauses as gaps **naming the exact edit that caused them**, and never
 re-triggers on its own output.
 
-Built for the SuperDocs builds showcase. Credit: sambaths (github.com/sambaths).
+Built for the SuperDocs task. Credit: sambaths (github.com/sambaths).
 
 ## Findings & verification
 
-Deep material is visible in-tree: [FINDINGS.md](FINDINGS.md) (ten SuperDocs bugs we hit and reproduced) and [EVIDENCE.md](EVIDENCE.md) (every number traces to a named test or run output). Keyless verification: `python -m pytest -q` → **36 passed** in ~7 s (fixture-replay, no API key).
+Deep material is visible in-tree: [FINDINGS.md](FINDINGS.md) (ten SuperDocs bugs we hit and reproduced) and [EVIDENCE.md](EVIDENCE.md) (every number traces to a named test or run output). Keyless verification: `python -m pytest -q` → **46 passed** in ~10 s (fixture-replay, no API key).
 
 ## What it does
 
@@ -19,7 +19,11 @@ Deep material is visible in-tree: [FINDINGS.md](FINDINGS.md) (ten SuperDocs bugs
   `durable_document_id`s, and records roles (`manual` / `procedure`).
 - `link` — builds the traceability matrix: one compact-mode chat turn per document
   maps every ISO clause in scope to its covering section with provenance
-  (`chunk_id`, heading path, verbatim quote). Costs ~1 op per document.
+  (`chunk_id`, heading path, verbatim quote). Costs ~1 op per document. With the
+  opt-in `--discover` flag, a shortlisting pass runs first — free structural
+  reads matched locally, then at most one batched search turn — and prints
+  candidate evidence sections before mapping; see [Honest limits](#honest-limits).
+  `--plan` previews either path at 0 ops.
 - `edit` — guided edit through SuperDocs' human-approval flow. When an approved edit
   deletes or rewrites a section that was evidence for a clause, a gap lands in the
   matrix **synchronously during approve-response processing**, with a narrative like:
@@ -83,6 +87,9 @@ uploaded once via `POST /v1/templates/upload` and reused for every later pack.
 - Per-run max-turns cap (`CK_MAX_TURNS`, default 12) and per-call WARN_AFTER /
   MAX_WAIT timers follow SuperDocs' documented latency table; polling never runs
   unbounded.
+- The opt-in `link --discover` shortlisting adds at most one batched search turn
+  (~+1 op) on top of mapping; `link --plan --discover` previews the spend for
+  0 ops.
 - A full small-sample cycle (init → link → guided edit → plan → recheck) costs about
   8 ops; adding the branded pack generation and both exports lands the whole demo
   story at **9 ops**. Exports and template upload are free; only the pack
@@ -146,7 +153,7 @@ explicitly — approval decisions are never silently auto-made.
 Multi-document sessions (roster + durable ids + save-once binding), async chat with
 the item-by-item approval flow (`approval_mode: ask_every_time`, batched decisions),
 compact response mode with `chunk_diffs`, the doc-events change feed with cursor,
-free structure reads for cheap verification, the templates surface (upload-once
+free structure reads for cheap verification, chat-mediated search (opt-in `--discover` lane only — see Honest limits for live-test caveats), the templates surface (upload-once
 letterhead branding), pre-signed downloads (`POST /v1/downloads`) with the
 `X-Export-Warnings` header decoded and surfaced, and per-response usage accounting.
 
@@ -159,3 +166,11 @@ library ships official identifiers and titles plus clausekeeper's own original
 "what an auditor looks for" notes; no standard body text is reproduced. Verification
 quality depends on the model tier behind the session; gaps can be false positives
 until a human reviews them at the approval flow.
+
+### Evidence discovery (`link --discover`, opt-in)
+
+By default `link` maps clauses using one verification turn per document — SuperDocs search is never called. With `--discover`, clausekeeper first shortlists candidate evidence sections using free structural reads matched locally against section headings (0 billable ops). Clauses the free pass can't resolve go through **one batched SuperDocs search turn** (~+1 op, billed by your plan); it never exceeds one searching turn per run and never invents candidates — weak results are reported honestly and mapping falls back to the standard path. Reads can lag recent edits by a few seconds, so discovery always runs before any editing turns. Preview the spend first with `link --plan --discover` (0 ops).
+
+It's opt-in because search is the least proven surface in this build. When search isn't used: by default (`link` without the flag never calls it), when `--plan` previews, and when the local pass already covers every clause the batched turn is skipped (`search turn skipped — local shortlist covered every clause (0 ops)`).
+
+Live-test note (2026-08-23, 0 ops spent — see `scratch/issues/assets/0006-live-uat-discover.md` privately): the free-read lane worked live at 0 ops, but the single batched search turn exceeded SuperDocs' documented 300 s `verification_turn` max-wait (CLI aborted before mapping, no shortlist rows persisted) and, despite instructions never to invent entries, returned a plausible-looking candidate for seeded-gap clause 9.2 (no covering document by design) — worse than plain mapping on honesty. Shortlists are advisory only: nothing feeds the mapping turns automatically, and every search-sourced row should be treated as unverified until a human checks it.
