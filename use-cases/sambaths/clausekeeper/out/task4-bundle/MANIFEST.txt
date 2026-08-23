@@ -1,0 +1,33 @@
+CLAUSEKEEPER DELIVERABLES — Demo bundle
+Generated: 2026-08-23
+
+FILES
+- clausekeeper-demo.mp4    demo video, ~2:00-3:00, 1920x1080, agent-generated,
+                       synthetic narration (voice: Kokoro TTS am_eric, Apache 2.0, speed 0.92)
+- thumbnail.jpg       YouTube/Drive thumbnail
+- writeup.pdf         one-page write-up (source of truth: docs/writeup.md)
+- architecture.png/.svg rendered from committed docs/architecture.mmd
+- MANIFEST.txt        this file
+- SCRUB-AUDIT.txt     secrets scrub record
+
+PROVENANCE (all footage from real runs/artifacts)
+- Beat 1 cold open: clausekeeper edit NM-PRO-04 → approve → gap lands naming change_id
+              (docs/media/transcripts/clausekeeper-gap.txt, hero-1-gap-naming.svg)
+- Beat 2 rename: show proves durable_document_id survives rename
+- Beat 3 pack: branded audit-readiness pack via templates + pre-signed downloads
+- Beat 4 discover: link --discover free-read 0 ops → one batched search capped 1 op
+- Beat 5 measured: measured-results table = docs/writeup.md table
+- Beat 6 close: repo URL + 46 tests
+
+DISCLOSURE
+The entire video is agent-generated including fully synthetic voiceover
+(Kokoro TTS am_eric, Apache 2.0, speed 0.92). No human appears on camera
+(applicant's recorded decision). This disclosure accompanies uploads per
+honesty-over-theater rails.
+
+UPLOAD CHECKLIST
+[ ] YouTube upload (public/unlisted): title contains 'SuperDocs';
+    description contains disclosure line + repo link
+[ ] Google Drive copy: clausekeeper-demo.mp4 + thumbnail.jpg + writeup.pdf
+    + architecture.png
+[ ] Form links when the Google Form arrives
