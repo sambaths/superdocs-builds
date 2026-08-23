@@ -1,0 +1,8 @@
+flowchart LR
+  IN["pile QMS docs<br/>Quality Manual + 5 Procedures"] --> RO["roster + save<br/>durable_document_id"]
+  RO --> LI["link (compact, 1 turn/doc)<br/>clause → section [chunk_id @offset quote]"]
+  LI --> ED["edit (HITL approve)<br/>change_id · instruction · job · time"]
+  ED --> RC["recheck (doc-events + batch verify)<br/>gap lands synchronously"]
+  RC --> SH["show<br/>matrix + gaps + attribution"]
+  SH --> PK["pack<br/>letterhead template → pre-signed DOCX+PDF<br/>X-Export-Warnings"]
+  PK --> OUT["audit-readiness pack"]
