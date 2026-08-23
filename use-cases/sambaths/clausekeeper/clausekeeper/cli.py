@@ -3,7 +3,7 @@ import json
 import os
 import sys
 
-from . import db, editing, ingest, linking, packing, rechecking
+from . import db, discover, editing, ingest, linking, packing, rechecking
 from .library import LIBRARY_PATH, load_library, sample_ids, subset
 from .superdocs import FixtureTransport, HttpTransport, OpsFloorExceeded, SuperDocsClient
 
@@ -42,19 +42,47 @@ def cmd_link(args):
     client = build_client(args)
     try:
         clauses = subset(load_library(args.library), args.sample)
+        if getattr(args, "plan", False):
+            _print_link_plan(client, conn, clauses, args)
+            return
+        discovery = None
+        if getattr(args, "discover", False):
+            discovery = discover.run_discover(client, conn, clauses)
         results = linking.build_links(client, conn, clauses)
         persist_usage(conn, client)
-        total_ops = sum(r["ops_charged"] for r in results)
+        mapping_ops = sum(r["ops_charged"] for r in results)
+        total_ops = mapping_ops + (discovery or {}).get("ops_charged", 0)
         for r in results:
             print(f"linked {r['doc']}: {r['links_added']} clauses covered")
-        print(f"ops charged this run: {total_ops}")
+        if discovery is None:
+            print(f"ops charged this run: {total_ops}")
+        elif discovery["ops_charged"]:
+            print(f"ops charged this run: {total_ops} (mapping"
+                  f" {mapping_ops} + discover search"
+                  f" {discovery['ops_charged']})")
+        else:
+            print(f"ops charged this run: {total_ops} (mapping only)")
         expected = args.corpus_expected
         if expected:
             for u in linking.audit_against_expected(conn, expected):
                 state = "DETECTED" if u["detected"] else "MISSED"
                 print(f"seed {u['seed']} clause {u['clause_id']}: {state}")
+    except OpsFloorExceeded as exc:
+        print(f"STOPPED: {exc}")
+        sys.exit(2)
     finally:
         conn.close()
+
+
+def _print_link_plan(client, conn, clauses, args):
+    if getattr(args, "discover", False):
+        discover.plan_discover(client, conn, clauses)
+        return
+    docs = discover.bound_documents(conn)
+    print("LINK PLAN (preview mode - zero billable ops)")
+    print(f"  {len(docs)} documents × 1 verification turn each"
+          f" = ~{len(docs)} ops (unchanged by --plan)")
+    print("  add --discover for +≤1 op shortlisting pass")
 
 
 def cmd_edit(args):
@@ -208,6 +236,11 @@ def main(argv=None):
 
     p = sub.add_parser("link", help="build the clause-to-section matrix")
     p.add_argument("--sample", type=int, default=None)
+    p.add_argument("--discover", action="store_true",
+                   help="opt-in evidence-discovery pass before mapping"
+                        " (shortlists candidate sections, ~+1 op max)")
+    p.add_argument("--plan", action="store_true",
+                   help="zero-spend preview of the mapping pass")
 
     p = sub.add_parser("edit", help="guided edit through the approve flow")
     p.add_argument("document")

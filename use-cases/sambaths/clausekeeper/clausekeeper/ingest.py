@@ -18,6 +18,7 @@ def init_session(client, conn, corpus_dir: str) -> dict:
     conn.execute("DELETE FROM edits")
     conn.execute("DELETE FROM runs")
     conn.execute("DELETE FROM our_jobs")
+    conn.execute("DELETE FROM shortlists")
     conn.execute("DELETE FROM documents")
 
     corpus = Path(corpus_dir)
@@ -81,12 +82,12 @@ def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def find_chunk_by_heading(chunks: list[dict], heading) -> dict | None:
+def best_chunk_match(chunks: list[dict], heading) -> tuple[dict | None, float]:
     if not heading:
-        return None
+        return None, 0.0
     target = _norm(str(heading))
     if not target:
-        return None
+        return None, 0.0
     best, best_score = None, 0.0
     for c in chunks:
         cand = _norm(c["heading_path"])
@@ -94,7 +95,7 @@ def find_chunk_by_heading(chunks: list[dict], heading) -> dict | None:
         if not cand:
             continue
         if target == cand or target == full:
-            return c
+            return c, 1.0
         score = 0.0
         if target in cand or cand in target:
             score = max(len(target), len(cand)) / (
@@ -107,7 +108,11 @@ def find_chunk_by_heading(chunks: list[dict], heading) -> dict | None:
                     t_tokens | c_tokens)
         if score > best_score:
             best, best_score = c, score
-    return best if best_score >= 0.5 else None
+    return (best if best_score >= 0.5 else None), best_score
+
+
+def find_chunk_by_heading(chunks: list[dict], heading) -> dict | None:
+    return best_chunk_match(chunks, heading)[0]
 
 
 def extract_chunks(html: str) -> list[dict]:

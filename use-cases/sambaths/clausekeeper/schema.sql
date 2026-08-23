@@ -90,3 +90,14 @@ CREATE TABLE IF NOT EXISTS our_jobs (
     purpose TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS shortlists (
+    shortlist_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    clause_id TEXT NOT NULL,
+    durable_document_id TEXT,
+    chunk_id TEXT,
+    heading_path TEXT NOT NULL,
+    source TEXT NOT NULL CHECK (source IN ('local', 'search')),
+    score REAL,
+    discovered_at TEXT NOT NULL
+);
