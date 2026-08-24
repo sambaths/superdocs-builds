@@ -3,8 +3,8 @@
 
 Ticket 0019 delivery: a paused, human-walkthrough cadence. Each beat's spoken
 paragraph in docs/media/narration-script.txt is mirrored beat-for-beat in
-VO_TEXTS and synthesized per sentence at speed 0.85, then assembled with
-silence: 0.25 s lead-in, 0.55 s between sentences, 0.40 s tail.
+VO_TEXTS and synthesized per sentence at speed 0.97, then assembled with
+silence: 0.15 s lead-in, 0.32 s between sentences, 0.25 s tail.
 
 - Uses explicit KPipeline(lang_code='a') + pre-loaded en_core_web_sm to avoid HF hang.
 - Written for the ear: VO_TEXTS carries meaning only — identifiers, filenames,
@@ -29,11 +29,11 @@ MEDIA = REPO / "out" / "media"
 NARRATION = REPO / "docs/media/narration-script.txt"
 
 VOICE = "am_eric"
-SPEED = 0.85
+SPEED = 0.97
 SAMPLE_RATE = 24000
-LEAD_IN_S = 0.25  # silence before the first sentence
-INTER_S = 0.55    # silence between sentences
-TAIL_S = 0.40     # silence after the last sentence
+LEAD_IN_S = 0.15  # silence before the first sentence
+INTER_S = 0.32    # silence between sentences
+TAIL_S = 0.25     # silence after the last sentence
 
 # Spoken texts, mirroring the [beat N] paragraphs of narration-script.txt
 # beat-for-beat: short declarative sentences, numbers as natural words with
@@ -41,34 +41,33 @@ TAIL_S = 0.40     # silence after the last sentence
 VO_TEXTS: dict[str, str] = {
     "b1": (
         "Which change broke this requirement? Every auditor asks it. "
-        "Clausekeeper answers it the moment it happens. Edit a controlled procedure, "
-        "delete a section, approve. While the approval is still processing, a gap appears "
+        "Clausekeeper answers it as it happens. Edit a controlled procedure, "
+        "delete a section, approve. Before the approval finishes, a gap appears "
         "naming the change responsible, quoting exactly what was lost."
     ),
     "b2": (
         "Documents get renamed. Links shouldn't break. Here the quality manual gets a new name. "
-        "Nothing snaps: evidence attaches to the document itself, so every link holds "
-        "and every open gap stays attached. The matrix never noticed."
+        "Nothing snaps: evidence attaches to the document itself. The matrix never noticed."
     ),
     "b3": (
-        "Audit day. Proof usually hides in scattered runs and logs. Here, one command gathers everything "
-        "into a branded, audit-ready pack, exported as Word and PDF, with export warnings checked along the way. "
+        "Audit day. Proof hides in scattered runs and logs. Here, one command gathers everything "
+        "into a branded, audit-ready pack, exported as Word and PDF, with export warnings checked. "
         "Packing costs a single operation. The downloads are free."
     ),
     "b4": (
         "Linking is where cost creeps in. Opt-in discovery reads structure, shortlists matches locally: "
         "twelve of twenty-seven clauses matched free, fifteen via search, at most one extra operation. "
-        "Preview first, at zero operations. And when search finds nothing usable, discover warns honestly "
-        "instead of inventing candidates."
+        "Preview first, at zero operations. If search finds nothing, discover warns honestly, "
+        "never inventing candidates."
     ),
     "b5": (
         "The measured truth. Forty-six tests passed in about ten seconds. A full cycle costs nine operations. "
-        "An honest caveat: search once exceeded three hundred seconds and fabricated a candidate on seeded gap nine point two. "
-        "Search shortlists remain advisory only. Humans make the calls."
+        "One caveat: search once exceeded three hundred seconds and fabricated a candidate on seeded gap nine point two. "
+        "Search shortlists stay advisory. Humans make the calls."
     ),
     "b6": (
-        "So, back to our opening question. With clausekeeper, you always know which change broke what. "
-        "Every number quoted here traces to an artifact you can rerun, starting at pull request one thirty seven. "
+        "Back to our opening question. With clausekeeper, you know which change broke what. "
+        "Every number traces to a rerunnable artifact, starting at pull request one thirty seven. "
         "This video is fully agent-generated with synthetic narration, Kokoro TTS am eric, open-source, no human on camera."
     ),
 }
@@ -188,7 +187,7 @@ def main() -> None:
         d = float(subprocess.run(["ffprobe","-v","quiet","-show_entries","format=duration","-of","csv=p=0",str(p)],capture_output=True,text=True).stdout.strip())
         assert d > 0, f"{p} duration 0"
 
-    projected_final = total + 6 * 0.6  # make_video pads each beat by 0.6s
+    projected_final = total + 6 * 0.4  # make_video pads each beat by 0.4s
     print(f"SUM VO {total:.1f}s across {len(ORDER)} beats; projected final MP4 ~{projected_final:.1f}s (cap 195s)")
     if not (100 <= total <= 160):
         print("warning: VO sum outside ticket 0019 band (100-160s); trim or expand wording", file=sys.stderr)

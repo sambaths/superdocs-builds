@@ -261,7 +261,7 @@ Generated: 2026-08-24
 FILES
 - clausekeeper-demo.mp4    demo video, ~2:00-3:00, 1920x1080, agent-generated,
                        synthetic narration (voice: Kokoro TTS am_eric, Apache 2.0,
-                       speed 0.85, paused per-sentence delivery)
+                       speed 0.97, paused per-sentence delivery)
 - thumbnail.jpg       YouTube/Drive thumbnail
 - writeup.pdf         one-page write-up (source of truth: docs/writeup.md)
 - architecture.png/.svg rendered from committed docs/architecture.mmd
@@ -282,8 +282,8 @@ PROVENANCE (all footage from real runs/artifacts)
 
 DISCLOSURE
 The entire video is agent-generated including fully synthetic voiceover
-(Kokoro TTS am_eric, Apache 2.0, speed 0.85, per-sentence synthesis with
-0.55 s inter-sentence pauses). No human appears on camera (applicant's
+(Kokoro TTS am_eric, Apache 2.0, speed 0.97, per-sentence synthesis with
+0.32 s inter-sentence pauses). No human appears on camera (applicant's
 recorded decision). This disclosure accompanies uploads per
 honesty-over-theater rails.
 

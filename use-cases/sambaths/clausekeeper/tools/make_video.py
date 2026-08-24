@@ -22,7 +22,7 @@ BUNDLE = REPO / "out" / "task4-bundle"
 for d in (SEG, BUNDLE):
     d.mkdir(parents=True, exist_ok=True)
 
-PAD = 0.6  # silence between beats
+PAD = 0.4  # silence between beats
 
 
 def probe(path: pathlib.Path) -> float:
