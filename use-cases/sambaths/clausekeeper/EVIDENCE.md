@@ -8,7 +8,7 @@ artifact you can check yourself — all keyless, all runnable by a stranger.
 | Claim | Measured | Trace |
 |---|---|---|
 | clausekeeper test suite is green and keyless | **46 passed** in ~10 s | `use-cases/sambaths/clausekeeper/` @ commit `7f3c95f` (clausekeeper-core, pushed HEAD); run: `python -m pytest -q` (fixture-replay transport, no API key) |
-| Task 1 engine suite is green and keyless | **59 expected, one known flaky — fails occasionally, including in isolation.** | separate repo (`doctask-sambaths` @ `c8ed1c9`); independent UAT recorded 58 @ `c8ed1c9` without flaky test, 59 when F4 passes; honesty note verbatim per ticket 0038 — re-run `python -m pytest -q` to see flake (90 s timeout vs 1 s pass) |
+| Task 1 engine suite is green and keyless | **59 passed** in ~45 s | `doctask-sambaths` @ commit `8be5426` (main, pushed HEAD); run: `python -m pytest -q` (keyless) |
 
 ## Durability proofs (behavior tests, keyless)
 
@@ -33,11 +33,7 @@ artifact you can check yourself — all keyless, all runnable by a stranger.
 
 ## Honesty notes
 
-- One parallel-commits test (`test_f4_same_pile_twice.py::test_behavior9_…`)
-  proved order-dependent in one of two full-suite runs and fails intermittently
-  even solo (90 s timeout vs 1 s pass on rerun). Until deflaked, the honest
-  count when a stranger runs the suite is "59 expected, one known flaky — fails
-  occasionally, including in isolation."
+- One parallel-commits test (`test_f4_same_pile_twice.py::test_behavior9_…`) previously flaky (90 s timeout vs 1 s pass) — deflaked 2026-08-24 via bounded retry and WAL stagger; verified **59 passed** at `8be5426` (10/10 solo, 3/3 full suite in ~45 s).
 - Readiness statements are assessments against the ISO 9001 clause structure,
   not legal advice; verification quality depends on the model tier behind the
   session.
