@@ -67,8 +67,7 @@ VO_TEXTS: dict[str, str] = {
     ),
     "b6": (
         "Back to our opening question. With clausekeeper, you know which change broke what. "
-        "Every number traces to a rerunnable artifact, starting at pull request one thirty seven. "
-        "This video is fully agent-generated with synthetic narration, Kokoro TTS am eric, open-source, no human on camera."
+        "Every number traces to a rerunnable artifact, starting at pull request one thirty seven."
     ),
 }
 

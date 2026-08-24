@@ -30,4 +30,4 @@ Linking is where cost creeps in. Opt-in discovery reads structure, shortlists ma
 The measured truth. Forty-six tests passed in about ten seconds. A full cycle costs nine operations. One caveat: search once exceeded three hundred seconds and fabricated a candidate on seeded gap nine point two. Search shortlists stay advisory. Humans make the calls.
 
 [beat 6 — close and disclosure]
-Back to our opening question. With clausekeeper, you know which change broke what. Every number traces to a rerunnable artifact, starting at pull request one thirty seven. This video is fully agent-generated with synthetic narration, Kokoro TTS am eric, open-source, no human on camera.
+Back to our opening question. With clausekeeper, you know which change broke what. Every number traces to a rerunnable artifact, starting at pull request one thirty seven.
