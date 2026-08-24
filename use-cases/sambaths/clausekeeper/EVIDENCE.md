@@ -7,7 +7,7 @@ artifact you can check yourself — all keyless, all runnable by a stranger.
 
 | Claim | Measured | Trace |
 |---|---|---|
-| clausekeeper test suite is green and keyless | **46 passed** in ~10 s | `use-cases/sambaths/clausekeeper/` @ commit `d20cb18` (clausekeeper-core, pushed HEAD); run: `python -m pytest -q` (fixture-replay transport, no API key) |
+| clausekeeper test suite is green and keyless | **46 passed** in ~10 s | `use-cases/sambaths/clausekeeper/` @ commit `04257bb` (clausekeeper-core, pushed HEAD); run: `python -m pytest -q` (fixture-replay transport, no API key) |
 | Task 1 engine suite is green and keyless | **59 passed** in ~45 s | `doctask-sambaths` @ commit `8be5426` (main, pushed HEAD); run: `python -m pytest -q` (keyless) |
 
 ## Durability proofs (behavior tests, keyless)

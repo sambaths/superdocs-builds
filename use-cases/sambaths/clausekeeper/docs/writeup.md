@@ -42,7 +42,7 @@ In order, each with what gets dropped: **(1)** surgical edit contract — outlin
 
 ## Run it yourself
 
-`use-cases/sambaths/clausekeeper` on `superdocs-builds` PR #137 (`clausekeeper-core`), commit `d20cb18`.
+`use-cases/sambaths/clausekeeper` on `superdocs-builds` PR #137 (`clausekeeper-core`), commit `04257bb`.
 
 ```bash
 pip install -r requirements.txt

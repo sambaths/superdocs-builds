@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 import base64
-import datetime
 import hashlib
 import html
 import pathlib
@@ -257,7 +256,7 @@ checksums = "\n".join(
 )
 
 manifest = f"""CLAUSEKEEPER DELIVERABLES — Demo bundle
-Generated: {datetime.date.today().isoformat()}
+Generated: 2026-08-24
 
 FILES
 - clausekeeper-demo.mp4    demo video, ~2:00-3:00, 1920x1080, agent-generated,
