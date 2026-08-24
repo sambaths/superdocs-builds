@@ -1,7 +1,7 @@
 file '/Users/sambaths/superdocs-builds/use-cases/sambaths/clausekeeper/out/media/slides/04-b3-hero1.png'
-duration 0.867
+duration 4.717
 file '/Users/sambaths/superdocs-builds/use-cases/sambaths/clausekeeper/out/media/slides/04-b3-hero2.png'
-duration 0.867
+duration 4.717
 file '/Users/sambaths/superdocs-builds/use-cases/sambaths/clausekeeper/out/media/slides/04-b3-hero3.png'
-duration 0.866
+duration 4.716
 file '/Users/sambaths/superdocs-builds/use-cases/sambaths/clausekeeper/out/media/slides/04-b3-hero3.png'

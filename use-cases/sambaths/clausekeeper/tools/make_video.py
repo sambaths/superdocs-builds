@@ -32,10 +32,19 @@ def probe(path: pathlib.Path) -> float:
 
 
 def ensure_vo(path: pathlib.Path) -> None:
-    """Ensure VO file exists; synthesize 2s silence as placeholder if missing (smoke)."""
+    """Ensure VO file exists; try Kokoro synth via tools/synth_vo.py, else 2s silence smoke."""
     if path.exists():
         return
-    # create 2s silent AIFF as placeholder (ffprobe will report ~2.0)
+    # Try to generate all VO via synth_vo.py (Kokoro am_eric speed 0.92) if available
+    synth = REPO / "tools" / "synth_vo.py"
+    if synth.exists():
+        try:
+            subprocess.run(["python3", str(synth)], check=True, capture_output=True)
+            if path.exists():
+                return
+        except Exception as e:
+            print(f"VO Kokoro synth_vo.py failed for {path.name}: {e} — using silence fallback", flush=True)
+    # fallback: 2s silent AIFF as placeholder (ffprobe will report ~2.0)
     subprocess.run(
         ["ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
          "-t", "2", "-c:a", "pcm_s16be", str(path)], check=True)

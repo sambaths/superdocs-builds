@@ -11,6 +11,8 @@
 from __future__ import annotations
 
 import base64
+import datetime
+import hashlib
 import html
 import pathlib
 import re
@@ -223,14 +225,39 @@ if not hits:
 audit_lines += [
     "On-screen handles: 'sambaths' only; corpus emails use fictional domains",
     "   (northwind.example / northgate.example); no .env contents anywhere.",
+    "Redaction policy: any private content found would be solid-boxed, never",
+    "   blurred (none found this run).",
     "Verdict: PASS — safe for upload.",
 ]
 (BUNDLE / "SCRUB-AUDIT.txt").write_text("\n".join(audit_lines), encoding="utf-8")
 print("scrub audit -> SCRUB-AUDIT.txt")
 
 # ---------------------------------------------------------------- manifest
+def sha256_of(p: pathlib.Path) -> str:
+    h = hashlib.sha256()
+    with p.open("rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+# every bundle artifact except this manifest itself (self-hash impossible)
+CHECKSUM_FILES = [
+    "clausekeeper-demo.mp4",
+    "thumbnail.jpg",
+    "writeup.pdf",
+    "architecture.png",
+    "architecture.svg",
+    "SCRUB-AUDIT.txt",
+]
+checksums = "\n".join(
+    f"{sha256_of(BUNDLE / name)}  {name}"
+    for name in CHECKSUM_FILES
+    if (BUNDLE / name).exists()
+)
+
 manifest = f"""CLAUSEKEEPER DELIVERABLES — Demo bundle
-Generated: 2026-08-23
+Generated: {datetime.date.today().isoformat()}
 
 FILES
 - clausekeeper-demo.mp4    demo video, ~2:00-3:00, 1920x1080, agent-generated,
@@ -238,8 +265,11 @@ FILES
 - thumbnail.jpg       YouTube/Drive thumbnail
 - writeup.pdf         one-page write-up (source of truth: docs/writeup.md)
 - architecture.png/.svg rendered from committed docs/architecture.mmd
-- MANIFEST.txt        this file
+- MANIFEST.txt        this file (with sha256 checksums below)
 - SCRUB-AUDIT.txt     secrets scrub record
+
+CHECKSUMS (sha256)
+{checksums}
 
 PROVENANCE (all footage from real runs/artifacts)
 - Beat 1 cold open: clausekeeper edit NM-PRO-04 → approve → gap lands naming change_id

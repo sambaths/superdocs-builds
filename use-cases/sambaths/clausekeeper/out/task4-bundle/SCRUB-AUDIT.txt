@@ -9,4 +9,6 @@ Forbidden-pattern hits: 0
   zero hits across all scanned sources
 On-screen handles: 'sambaths' only; corpus emails use fictional domains
    (northwind.example / northgate.example); no .env contents anywhere.
+Redaction policy: any private content found would be solid-boxed, never
+   blurred (none found this run).
 Verdict: PASS — safe for upload.

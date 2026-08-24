@@ -1,5 +1,5 @@
 CLAUSEKEEPER DELIVERABLES — Demo bundle
-Generated: 2026-08-23
+Generated: 2026-08-24
 
 FILES
 - clausekeeper-demo.mp4    demo video, ~2:00-3:00, 1920x1080, agent-generated,
@@ -7,8 +7,16 @@ FILES
 - thumbnail.jpg       YouTube/Drive thumbnail
 - writeup.pdf         one-page write-up (source of truth: docs/writeup.md)
 - architecture.png/.svg rendered from committed docs/architecture.mmd
-- MANIFEST.txt        this file
+- MANIFEST.txt        this file (with sha256 checksums below)
 - SCRUB-AUDIT.txt     secrets scrub record
+
+CHECKSUMS (sha256)
+81fa2359f0853e124dd02fd40488308612c94591bf161235f11a187a9c6cdb3a  clausekeeper-demo.mp4
+808821a6d26ed067fab22232a75bb06edb3585e6b1b197f31837dffe62ecdfaf  thumbnail.jpg
+d8233d71bf40a52551d52e994e55d9cf2b6011293cd8c1f5851467592a561eeb  writeup.pdf
+eb2e80e4f12150e053cdcffd676bb201242698f6d563eaa5c17a35cc8b1a7a39  architecture.png
+4515eb01830974d75782676e6f81f4c3e04c76c0f4cc786f8dd54ea33a263337  architecture.svg
+55b950f2b8a980f1a6f444288ee8f41ac548cfaf259810129f3557a11f6d2c51  SCRUB-AUDIT.txt
 
 PROVENANCE (all footage from real runs/artifacts)
 - Beat 1 cold open: clausekeeper edit NM-PRO-04 → approve → gap lands naming change_id
