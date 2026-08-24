@@ -1,34 +1,33 @@
-# clausekeeper demo narration — six beats + close (~2:30)
-# Fully synthetic voiceover (Kokoro TTS am_eric, speed 0.92, Apache 2.0).
-# This video is fully agent-generated with synthetic narration (Kokoro TTS am_eric, open-source) — no human on camera.
-# Kokoro am_eric voice, Paper & Ink design, ffmpeg 8.1.1. Every spoken number below is copy-pasted from docs/writeup.md — diff 0.
+# clausekeeper demo narration — six beats, written for the ear
+# Fully synthetic voiceover: Kokoro TTS voice am_eric (Apache 2.0), speed 0.85.
+# Delivery: per-sentence synthesis assembled with a paused cadence in
+# tools/synth_vo.py — 0.25 s lead-in, 0.55 s between sentences, 0.40 s tail.
+# Each [beat N] paragraph below is the exact spoken text handed to the synth.
+# Identifiers, filenames, routes, header names, and timestamps are never
+# spoken; the slide caption bars and terminal footage carry those, the voice
+# carries meaning only.
+# Number parity: every measured number spoken below equals docs/writeup.md
+# (46 tests · about ten seconds · nine operations full cycle · at most one
+# extra operation for discovery · a single operation to pack · twelve of
+# twenty-seven clauses matched free · fifteen via search · zero operations
+# preview · search once exceeded three hundred seconds and fabricated a
+# candidate on seeded gap nine point two).
+# The close ends with the fully-synthetic disclosure line, verbatim.
 
-[beat 1 — cold open: gap-naming 0:00-0:20]
-A gap that names its cause. You edit NM-PRO-04, delete the disposition section, approve — the gap lands synchronously during approve-response processing, naming change chg_42 at 2026-08-22T14:02:00Z, instruction Delete the disposition section, job job_edit_01. See docs/media/transcripts/clausekeeper-b1-gap.txt.
+[beat 1 — cold open: the auditor's question]
+Which change broke this requirement? Every auditor asks it. Clausekeeper answers it the moment it happens. Edit a controlled procedure, delete a section, approve. While the approval is still processing, a gap appears naming the change responsible, quoting exactly what was lost.
 
-[beat 2 — rename survival 0:20-0:45]
-Rename the document. The matrix is keyed on durable_document_id, not display name. After rename, show still lists NM-PRO-02-controlled-documents with the same durable ids, and the gap on 8.7 stays attached. See docs/media/transcripts/clausekeeper-b2-rename.txt.
+[beat 2 — rename survival]
+Documents get renamed. Links shouldn't break. Here the quality manual gets a new name. Nothing snaps: evidence attaches to the document itself, so every link holds and every open gap stays attached. The matrix never noticed.
 
-[beat 3 — branded pack export 0:45-1:15]
-Now the branded pack. One Northgate letterhead template uploaded once via POST /v1/templates/upload, one generation turn, then pre-signed DOCX and PDF via POST /v1/downloads with X-Export-Warnings checked every time. See docs/media/transcripts/clausekeeper-b3-pack.txt.
+[beat 3 — audit-day pack]
+Audit day. Proof usually hides in scattered runs and logs. Here, one command gathers everything into a branded, audit-ready pack, exported as Word and PDF, with export warnings checked along the way. Packing costs a single operation. The downloads are free.
 
-[beat 4 — Discover lane 1:15-1:50]
-Opt-in discovery. Link with discover starts with free structural reads matched locally — twelve of twenty-seven linkable clauses at zero ops — then at most one batched SuperDocs search turn for the remaining fifteen. The shortlist prints before mapping, advisory only. With plan preview, zero ops. When search finds nothing usable, the lane warns honestly and falls back to standard mapping, inventing nothing. See docs/media/transcripts/clausekeeper-b4-discover.txt and docs/media/transcripts/clausekeeper-b4-weak.txt.
+[beat 4 — discover lane]
+Linking is where cost creeps in. Opt-in discovery reads structure, shortlists matches locally: twelve of twenty-seven clauses matched free, fifteen via search, at most one extra operation. Preview first, at zero operations. And when search finds nothing usable, discover warns honestly instead of inventing candidates.
 
-[beat 5 — measured + honest limitations 1:50-2:20]
-What it costs and what it does not do.
-Measured numbers from docs/writeup.md:
-| Keyless test suite | **46 passed** in ~10 s | `EVIDENCE.md:10` and `docs/media/transcripts/clausekeeper-b6-pytest.txt` |
-| Pack generation + exports | **1 op** for generation, DOCX + PDF via pre-signed downloads, `X-Export-Warnings` checked | `docs/media/transcripts/clausekeeper-b3-pack.txt` (`ops_spent:1`, `warnings:["font Calibri substituted on page 2"]`) and `tests/fixtures/pack_flow.json` |
-| Discover lane batched search | **one turn, +1 op** capped, 15 remaining clauses via search | `docs/media/transcripts/clausekeeper-b4-discover.txt` (`[search] charged 1 op`, `search resolved 15/15`) and `tests/fixtures/discover_link.json` |
-| Discover plan preview | **0 ops** | `docs/media/transcripts/clausekeeper-b4-discover.txt` (`DISCOVER PLAN (preview mode - zero billable ops)` and `projected search spend: 1 op`) |
-| Discover weak fallback | **WARN fallback at 1 op**, no fabricated candidates | `docs/media/transcripts/clausekeeper-b4-weak.txt` (`WARN: search returned usable candidates for only 0 of 15 unresolved clauses`, `WARN: discover could not shortlist 15 clauses - continuing with standard mapping`) and `tests/fixtures/discover_weak.json` |
-- One compact verification turn per document (`1 op/doc`) → costs stay predictable → slower gap surfacing within a cycle vs per-clause calls
-python -m pytest -q  # → 46 passed in ~10 s (fixture-replay, no API key) — see docs/media/transcripts/clausekeeper-b6-pytest.txt
-python -m clausekeeper --fixture tests/fixtures/pack_flow.json --db /tmp/ck-pack.db pack --template assets/northgate-letterhead.docx --out /tmp/ck-exports  # 1 op + X-Export-Warnings — see docs/media/transcripts/clausekeeper-b3-pack.txt
-python -m clausekeeper --fixture tests/fixtures/discover_link.json link --discover  # free-read 12/27 at 0 ops + one batched search 15 rows at 1 op — see docs/media/transcripts/clausekeeper-b4-discover.txt
+[beat 5 — measured and honest]
+The measured truth. Forty-six tests passed in about ten seconds. A full cycle costs nine operations. An honest caveat: search once exceeded three hundred seconds and fabricated a candidate on seeded gap nine point two. Search shortlists remain advisory only. Humans make the calls.
 
-Honest limitations: free-read works at 0 ops, batched search exceeded 300 s and fabricated candidate on seeded-gap 9.2 — worse than plain mapping on honesty. Search shortlists are advisory only.
-
-[beat 6 — close 2:20-2:45]
-Every number traces to a path you can re-run. PR #137 on superdocs-builds, branch clausekeeper-core. Re-run: python -m pytest -q — forty-six passed, nine operations cycle plus one for discover, one operation pack. This video is fully agent-generated with synthetic narration (Kokoro TTS am_eric, open-source) — no human on camera.
+[beat 6 — close and disclosure]
+So, back to our opening question. With clausekeeper, you always know which change broke what. Every number quoted here traces to an artifact you can rerun, starting at pull request one thirty seven. This video is fully agent-generated with synthetic narration, Kokoro TTS am eric, open-source, no human on camera.

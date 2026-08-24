@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """Synthesize clausekeeper VO segments via Kokoro TTS am_eric (Apache 2.0).
 
-Each docs/media/narration-script.txt beat segment (b1…b6) → out/media/vo-b*.aiff
-via kokoro with espeak-ng + en_core_web_sm, speed 0.92 ad cadence.
+Ticket 0019 delivery: a paused, human-walkthrough cadence. Each beat's spoken
+paragraph in docs/media/narration-script.txt is mirrored beat-for-beat in
+VO_TEXTS and synthesized per sentence at speed 0.85, then assembled with
+silence: 0.25 s lead-in, 0.55 s between sentences, 0.40 s tail.
 
 - Uses explicit KPipeline(lang_code='a') + pre-loaded en_core_web_sm to avoid HF hang.
-- Cleans narration script for natural speech: removes markdown table pipes, file-path
-  references, and python command lines; beat 5's measured table is rendered as
-  concise spoken sentences that preserve every number copy-pasted from docs/writeup.md
-  (grep diff 0) but avoid reading markdown syntax verbatim (which would inflate
-  duration to 150s). All numbers are still spoken as digits/words.
-- Concatenates Kokoro chunk outputs, writes 24000 Hz AIFF (pcm_s16be), then
-  ffprobe reports duration >0 per segment, sum ≈115s ±10s (reference: doctask 115s).
-- Logs voice/speed/license for audit.
+- Written for the ear: VO_TEXTS carries meaning only — identifiers, filenames,
+  timestamps, job/change ids, ISO stamps, HTTP routes, and header names are
+  never spoken (slide caption bars and terminal footage carry those).
+- Measured numbers match docs/writeup.md exactly (number parity rule).
+- Concatenates per-sentence Kokoro chunks with the pause scheme, writes
+  24000 Hz AIFF (PCM_16) -> out/media/vo-b*.aiff; ffprobe reports duration
+  per segment plus the sum; an audit log line records voice/speed/license.
 
-Usage: python tools/synth_vo.py [--dry]  # dry prints durations without writing
+Usage: python tools/synth_vo.py [--dry]  # dry prints texts without synthesizing
 """
 from __future__ import annotations
 
@@ -27,46 +28,48 @@ REPO = pathlib.Path(__file__).resolve().parents[1]
 MEDIA = REPO / "out" / "media"
 NARRATION = REPO / "docs/media/narration-script.txt"
 
-# Deterministic spoken texts derived from narration-script.txt.
-# Each entry is a cleaned, natural-speech rendering of the corresponding
-# [beat N] paragraph in narration-script.txt, preserving every measured
-# number (46 passed, 9 ops, 1 op, etc.) for grep-diff 0, but removing
-# markdown pipes, backticks, and python command lines that would otherwise
-# inflate TTS duration beyond the 115s ±10s target.
-# See docs/media/narration-script.txt for source of truth; this dict is
-# the TTS-friendly projection of that file.
+VOICE = "am_eric"
+SPEED = 0.85
+SAMPLE_RATE = 24000
+LEAD_IN_S = 0.25  # silence before the first sentence
+INTER_S = 0.55    # silence between sentences
+TAIL_S = 0.40     # silence after the last sentence
+
+# Spoken texts, mirroring the [beat N] paragraphs of narration-script.txt
+# beat-for-beat: short declarative sentences, numbers as natural words with
+# exact parity against docs/writeup.md, no identifiers/routes/headers.
 VO_TEXTS: dict[str, str] = {
     "b1": (
-        "A gap that names its cause. You edit NM-PRO-04, delete the disposition section, "
-        "approve — the gap lands synchronously during approve-response processing, naming change "
-        "chg_42 at 2026-08-22T14:02:00Z, instruction Delete the disposition section, job job_edit_01."
+        "Which change broke this requirement? Every auditor asks it. "
+        "Clausekeeper answers it the moment it happens. Edit a controlled procedure, "
+        "delete a section, approve. While the approval is still processing, a gap appears "
+        "naming the change responsible, quoting exactly what was lost."
     ),
     "b2": (
-        "Rename the document. The matrix is keyed on durable_document_id, not display name. "
-        "After rename, show still lists NM-PRO-02 with the same durable ids, and the gap on 8.7 stays attached."
+        "Documents get renamed. Links shouldn't break. Here the quality manual gets a new name. "
+        "Nothing snaps: evidence attaches to the document itself, so every link holds "
+        "and every open gap stays attached. The matrix never noticed."
     ),
     "b3": (
-        "Now the branded pack. One Northgate letterhead template uploaded once via POST /v1/templates/upload, "
-        "one generation turn, then pre-signed DOCX and PDF via POST /v1/downloads with X-Export-Warnings checked every time."
+        "Audit day. Proof usually hides in scattered runs and logs. Here, one command gathers everything "
+        "into a branded, audit-ready pack, exported as Word and PDF, with export warnings checked along the way. "
+        "Packing costs a single operation. The downloads are free."
     ),
     "b4": (
-        "Opt-in discovery. Link with discover starts with free structural reads matched locally — "
-        "twelve of twenty-seven clauses at zero ops — then at most one batched SuperDocs search turn for the remaining fifteen. "
-        "The shortlist prints before mapping, advisory only. With plan preview, zero ops. "
-        "When search finds nothing usable, the lane warns honestly and falls back to standard mapping, inventing nothing."
+        "Linking is where cost creeps in. Opt-in discovery reads structure, shortlists matches locally: "
+        "twelve of twenty-seven clauses matched free, fifteen via search, at most one extra operation. "
+        "Preview first, at zero operations. And when search finds nothing usable, discover warns honestly "
+        "instead of inventing candidates."
     ),
     "b5": (
-        "What it costs and what it does not do. Forty-six tests passed in about ten seconds. "
-        "Pack generation one operation, plus free pre-signed downloads. "
-        "Discover batched search one turn plus one operation capped. Plan preview zero ops. "
-        "Weak fallback warns honestly, no fabricated candidates. One verification turn per document. "
-        "Honest limitations: free-read works at zero ops, batched search exceeded three hundred seconds and fabricated a candidate on seeded gap nine point two. "
-        "Search shortlists are advisory only. All footage is from real fixture-replay runs, no staging."
+        "The measured truth. Forty-six tests passed in about ten seconds. A full cycle costs nine operations. "
+        "An honest caveat: search once exceeded three hundred seconds and fabricated a candidate on seeded gap nine point two. "
+        "Search shortlists remain advisory only. Humans make the calls."
     ),
     "b6": (
-        "Every number traces to a path you can re-run. PR 137 on superdocs-builds, branch clausekeeper-core. "
-        "Re-run: python -m pytest -q — forty-six passed, nine operations cycle plus one for discover, one operation pack. "
-        "This video is fully agent-generated with synthetic narration, Kokoro TTS am_eric, open-source — no human on camera."
+        "So, back to our opening question. With clausekeeper, you always know which change broke what. "
+        "Every number quoted here traces to an artifact you can rerun, starting at pull request one thirty seven. "
+        "This video is fully agent-generated with synthetic narration, Kokoro TTS am eric, open-source, no human on camera."
     ),
 }
 
@@ -87,20 +90,30 @@ def check_prereqs() -> None:
         raise
 
 
-def synth_one(text: str, out_path: pathlib.Path, pipeline) -> float:
-    """Synthesize text via pipeline, write AIFF, return ffprobe duration."""
-    import soundfile as sf
-    import numpy as np
+def split_sentences(text: str) -> list[str]:
+    """Split spoken text into sentences on terminal punctuation."""
+    return [p for p in re.split(r"(?<=[.!?])\s+", text.strip()) if p]
 
-    audios = []
-    for _, _, audio in pipeline(text, voice="am_eric", speed=0.92):
-        audios.append(audio)
-    if not audios:
-        raise RuntimeError("Kokoro returned no audio")
-    concat = np.concatenate(audios) if len(audios) > 1 else audios[0]
-    # Kokoro outputs at 24000 Hz
-    sf.write(str(out_path), concat, 24000, format="AIFF", subtype="PCM_16")
-    # ffprobe duration
+
+def synth_one(text: str, out_path: pathlib.Path, pipeline) -> float:
+    """Per-sentence synthesis with paused cadence; writes AIFF; returns ffprobe duration."""
+    import numpy as np
+    import soundfile as sf
+
+    sentences = split_sentences(text)
+    pieces: list[np.ndarray] = [
+        np.zeros(int(SAMPLE_RATE * LEAD_IN_S), dtype=np.float32)
+    ]
+    for i, sentence in enumerate(sentences):
+        if i:
+            pieces.append(np.zeros(int(SAMPLE_RATE * INTER_S), dtype=np.float32))
+        audios = [audio for _, _, audio in pipeline(sentence, voice=VOICE, speed=SPEED)]
+        if not audios:
+            raise RuntimeError(f"Kokoro returned no audio for: {sentence[:60]}")
+        pieces.extend(audios)
+    pieces.append(np.zeros(int(SAMPLE_RATE * TAIL_S), dtype=np.float32))
+    concat = np.concatenate(pieces)
+    sf.write(str(out_path), concat, SAMPLE_RATE, format="AIFF", subtype="PCM_16")
     dur = float(
         subprocess.run(
             ["ffprobe", "-v", "quiet", "-show_entries", "format=duration", "-of", "csv=p=0", str(out_path)],
@@ -123,15 +136,21 @@ def main() -> None:
         raw = NARRATION.read_text(encoding="utf-8")
         beats_raw = re.split(r"\[beat\s+\d+.*?\]", raw, flags=re.I | re.S)
         print(f"source: {NARRATION} ({len(raw)} bytes, {len(beats_raw)-1} beats detected)")
-        # Log that every spoken number traces to writeup.md (grep diff check is external)
-        print("Kokoro TTS voice am_eric (Apache 2.0), speed 0.92, espeak-ng + en_core_web_sm")
-        print(f"VO texts derived from narration-script.txt: {list(VO_TEXTS.keys())}")
     else:
         print(f"warning: {NARRATION} not found, using VO_TEXTS as fallback", file=sys.stderr)
 
+    # Audit log line: voice/speed/license + pause scheme
+    print(
+        f"Kokoro TTS voice {VOICE} (Apache 2.0), speed {SPEED}, "
+        f"per-sentence pauses {LEAD_IN_S}/{INTER_S}/{TAIL_S}s, espeak-ng + en_core_web_sm"
+    )
+    print(f"VO texts derived from narration-script.txt: {ORDER}")
+
     if args.dry:
         for k in ORDER:
-            print(f"{k}: {VO_TEXTS[k][:80]}... ({len(VO_TEXTS[k])} chars)")
+            text = VO_TEXTS[k]
+            n_sent = len(split_sentences(text))
+            print(f"{k}: {len(text.split())} words, {n_sent} sentences :: {text[:80]}...")
         return
 
     check_prereqs()
@@ -144,7 +163,7 @@ def main() -> None:
         for k in ORDER:
             out = MEDIA / f"vo-{k}.aiff"
             subprocess.run(
-                ["ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono", "-t", "2", "-c:a", "pcm_s16be", str(out)],
+                ["ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i", f"anullsrc=r={SAMPLE_RATE}:cl=mono", "-t", "2", "-c:a", "pcm_s16be", str(out)],
                 check=True,
             )
             print(f"{k} fallback silence 2.0s -> {out}")
@@ -154,21 +173,25 @@ def main() -> None:
 
     MEDIA.mkdir(parents=True, exist_ok=True)
     total = 0.0
+    durations: dict[str, float] = {}
     for k in ORDER:
         text = VO_TEXTS[k]
         out = MEDIA / f"vo-{k}.aiff"
         dur = synth_one(text, out, pipeline)
+        durations[k] = dur
         total += dur
-        print(f"{k:2s} {dur:5.2f}s -> {out} ({len(text)} chars)")
+        print(f"{k:2s} {dur:5.2f}s -> {out} ({len(text.split())} words)")
 
-    print(f"SUM VO {total:.1f}s (target 115s ±10s, i.e. 105-125)")
-    if not (105 <= total <= 125):
-        print(f"warning: sum {total:.1f}s outside 105-125 target", file=sys.stderr)
     # also verify ffprobe per segment >0 is implicit; assert
     for k in ORDER:
         p = MEDIA / f"vo-{k}.aiff"
         d = float(subprocess.run(["ffprobe","-v","quiet","-show_entries","format=duration","-of","csv=p=0",str(p)],capture_output=True,text=True).stdout.strip())
         assert d > 0, f"{p} duration 0"
+
+    projected_final = total + 6 * 0.6  # make_video pads each beat by 0.6s
+    print(f"SUM VO {total:.1f}s across {len(ORDER)} beats; projected final MP4 ~{projected_final:.1f}s (cap 195s)")
+    if not (100 <= total <= 160):
+        print("warning: VO sum outside ticket 0019 band (100-160s); trim or expand wording", file=sys.stderr)
 
 
 if __name__ == "__main__":

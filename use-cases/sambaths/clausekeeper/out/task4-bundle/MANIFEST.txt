@@ -3,7 +3,8 @@ Generated: 2026-08-24
 
 FILES
 - clausekeeper-demo.mp4    demo video, ~2:00-3:00, 1920x1080, agent-generated,
-                       synthetic narration (voice: Kokoro TTS am_eric, Apache 2.0, speed 0.92)
+                       synthetic narration (voice: Kokoro TTS am_eric, Apache 2.0,
+                       speed 0.85, paused per-sentence delivery)
 - thumbnail.jpg       YouTube/Drive thumbnail
 - writeup.pdf         one-page write-up (source of truth: docs/writeup.md)
 - architecture.png/.svg rendered from committed docs/architecture.mmd
@@ -11,12 +12,12 @@ FILES
 - SCRUB-AUDIT.txt     secrets scrub record
 
 CHECKSUMS (sha256)
-81fa2359f0853e124dd02fd40488308612c94591bf161235f11a187a9c6cdb3a  clausekeeper-demo.mp4
+16c6d0d13e5fd1d15663e0dd0126fde5b3e6ac50eb9d9b4c4bbf24c6463f62fd  clausekeeper-demo.mp4
 808821a6d26ed067fab22232a75bb06edb3585e6b1b197f31837dffe62ecdfaf  thumbnail.jpg
 0694a554d85c5ff399a15b615ac467197547a33827ddf5e8285bd73b0a617c7a  writeup.pdf
 eb2e80e4f12150e053cdcffd676bb201242698f6d563eaa5c17a35cc8b1a7a39  architecture.png
 4515eb01830974d75782676e6f81f4c3e04c76c0f4cc786f8dd54ea33a263337  architecture.svg
-55b950f2b8a980f1a6f444288ee8f41ac548cfaf259810129f3557a11f6d2c51  SCRUB-AUDIT.txt
+0aee18cb72832994450cf6efad7c64338c874f0007f9b86229c8f9f07aebe8e9  SCRUB-AUDIT.txt
 
 PROVENANCE (all footage from real runs/artifacts)
 - Beat 1 cold open: clausekeeper edit NM-PRO-04 → approve → gap lands naming change_id
@@ -29,8 +30,9 @@ PROVENANCE (all footage from real runs/artifacts)
 
 DISCLOSURE
 The entire video is agent-generated including fully synthetic voiceover
-(Kokoro TTS am_eric, Apache 2.0, speed 0.92). No human appears on camera
-(applicant's recorded decision). This disclosure accompanies uploads per
+(Kokoro TTS am_eric, Apache 2.0, speed 0.85, per-sentence synthesis with
+0.55 s inter-sentence pauses). No human appears on camera (applicant's
+recorded decision). This disclosure accompanies uploads per
 honesty-over-theater rails.
 
 UPLOAD CHECKLIST

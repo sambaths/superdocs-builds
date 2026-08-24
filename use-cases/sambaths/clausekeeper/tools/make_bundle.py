@@ -208,7 +208,7 @@ for p in text_sources:
             hits.append((str(p), label, m.group(0)))
 
 audit_lines = [
-    "SCRUB AUDIT — recorded 2026-08-23",
+    "SCRUB AUDIT — recorded 2026-08-24",
     "Method: (1) programmatic scan of every text source feeding the video",
     "   (transcripts, narration script, writeup, architecture.mmd, all slide HTML)",
     "   for secret-key patterns, bearer tokens, .env assignments, and personal",
@@ -260,7 +260,8 @@ Generated: 2026-08-24
 
 FILES
 - clausekeeper-demo.mp4    demo video, ~2:00-3:00, 1920x1080, agent-generated,
-                       synthetic narration (voice: Kokoro TTS am_eric, Apache 2.0, speed 0.92)
+                       synthetic narration (voice: Kokoro TTS am_eric, Apache 2.0,
+                       speed 0.85, paused per-sentence delivery)
 - thumbnail.jpg       YouTube/Drive thumbnail
 - writeup.pdf         one-page write-up (source of truth: docs/writeup.md)
 - architecture.png/.svg rendered from committed docs/architecture.mmd
@@ -281,8 +282,9 @@ PROVENANCE (all footage from real runs/artifacts)
 
 DISCLOSURE
 The entire video is agent-generated including fully synthetic voiceover
-(Kokoro TTS am_eric, Apache 2.0, speed 0.92). No human appears on camera
-(applicant's recorded decision). This disclosure accompanies uploads per
+(Kokoro TTS am_eric, Apache 2.0, speed 0.85, per-sentence synthesis with
+0.55 s inter-sentence pauses). No human appears on camera (applicant's
+recorded decision). This disclosure accompanies uploads per
 honesty-over-theater rails.
 
 UPLOAD CHECKLIST
